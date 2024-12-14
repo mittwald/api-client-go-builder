@@ -76,53 +76,37 @@ func (s *TypeStore) BuildSubtypes() error {
 func (s *TypeStore) EmitDeclarations(targetPath string) error {
 	log.Info("emitting declarations", "count", s.Len())
 
-	types := make(chan Type)
-	errs := make(chan error)
-
 	ctx := GeneratorContext{KnownTypes: s}
 
-	for range 8 {
-		go func() {
-			for typ := range types {
-				ctxForType := ctx
-				ctxForType.CurrentPackage = typ.Name().PackageKey
+	buildType := func(typ Type) error {
+		ctxForType := ctx
+		ctxForType.CurrentPackage = typ.Name().PackageKey
 
-				names := typ.Name()
-				stmts := typ.EmitDeclaration(&ctxForType)
+		names := typ.Name()
+		stmts := typ.EmitDeclaration(&ctxForType)
 
-				log.Infof("emitting declaration for %s", names.StructName)
+		log.Infof("emitting declaration for %s", names.StructName)
 
-				// without Goimports(); does not make sense until the very end
-				root := names.BuildRoot().
-					AddStatements(stmts...).
-					Gofmt("-s")
+		// without Goimports(); does not make sense until the very end
+		root := names.BuildRoot().
+			AddStatements(stmts...).
+			Gofmt("-s")
 
-				if err := EmitToFile(targetPath, names, root); err != nil {
-					errs <- err
-				}
-			}
-		}()
+		return EmitToFile(targetPath, names, root)
 	}
 
-	go func() {
-		for _, typ := range s.ComponentSchemas {
-			types <- typ
+	for _, typ := range s.ComponentSchemas {
+		if err := buildType(typ); err != nil {
+			return err
+		}
+	}
+
+	for _, typ := range s.SubTypes {
+		if typ.IsLightweight() {
+			continue
 		}
 
-		for _, typ := range s.SubTypes {
-			if typ.IsLightweight() {
-				continue
-			}
-
-			types <- typ
-		}
-
-		close(types)
-		close(errs)
-	}()
-
-	for err := range errs {
-		if err != nil {
+		if err := buildType(typ); err != nil {
 			return err
 		}
 	}

@@ -2,6 +2,8 @@ package generator
 
 import (
 	"encoding/json"
+	"fmt"
+	"github.com/charmbracelet/log"
 	"github.com/moznion/gowrtr/generator"
 )
 
@@ -30,5 +32,7 @@ func (o *ReferenceType) EmitReference(ctx *GeneratorContext) string {
 		return target.EmitReference(ctx)
 	}
 
-	return "any"
+	log.Warn("could resolve reference", "ref", o.Target, "err", err)
+	return fmt.Sprintf("ERROR /* could not resolve %s */", o.Target)
+	//return "any"
 }

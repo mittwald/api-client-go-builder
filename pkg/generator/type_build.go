@@ -2,6 +2,7 @@ package generator
 
 import (
 	"fmt"
+	"github.com/charmbracelet/log"
 	"github.com/pb33f/libopenapi/datamodel/high/base"
 )
 
@@ -22,9 +23,21 @@ func BuildTypeFromSchema(names SchemaName, schema *base.SchemaProxy, knownTypes 
 
 	switch schemaType {
 	case "object":
-		if schema.Schema().AdditionalProperties != nil {
-			// TODO: Should be mapped to a map type, instead
-			return &UnknownType{BaseType: baseType}, nil
+		additionalProperties := schema.Schema().AdditionalProperties
+		if additionalProperties != nil {
+			var itemType Type = &UnknownType{baseType}
+			var err error
+
+			if additionalProperties.IsA() {
+				itemType, err = BuildTypeFromSchema(names.ForSubtype("item"), additionalProperties.A, knownTypes)
+				log.Debug("building map sub type", "name", names, "itemtype", itemType)
+			}
+
+			if err != nil {
+				return nil, fmt.Errorf("error building array item type for %s: %w", names.StructName, err)
+			}
+
+			return &MapType{BaseType: baseType, ItemType: itemType}, nil
 		}
 		return &ObjectType{BaseType: baseType}, nil
 	case "array":
@@ -64,6 +77,9 @@ func GuessTypeFromSchema(schema *base.SchemaProxy) (string, error) {
 
 	// When there are properties, assume the schema to be an object
 	if schema.Schema().Properties != nil {
+		return "object", nil
+	}
+	if schema.Schema().AdditionalProperties != nil {
 		return "object", nil
 	}
 
