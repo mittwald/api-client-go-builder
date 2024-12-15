@@ -47,12 +47,14 @@ func (o *ReferenceType) EmitReference(ctx *GeneratorContext) string {
 }
 
 func (o *ReferenceType) EmitValidation(ref string, ctx *GeneratorContext) string {
-	if v, ok := o.TargetType.(TypeWithValidation); ok {
+	target, _ := ctx.KnownTypes.LookupReference(o.Target)
+	if v, ok := target.(TypeWithValidation); ok {
 		return v.EmitValidation(ref, ctx)
 	}
 	return "nil"
 }
 
-func (o *ReferenceType) BuildExample() any {
-	return o.TargetType.BuildExample()
+func (o *ReferenceType) BuildExample(ctx *GeneratorContext) any {
+	target, _ := ctx.KnownTypes.LookupReference(o.Target)
+	return target.BuildExample(ctx)
 }

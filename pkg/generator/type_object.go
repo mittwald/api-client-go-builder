@@ -118,3 +118,13 @@ func (o *ObjectType) EmitReference(ctx *GeneratorContext) string {
 func (o *ObjectType) EmitValidation(ref string, _ *GeneratorContext) string {
 	return fmt.Sprintf("%s.Validate()", ref)
 }
+
+func (o *ObjectType) BuildExample(ctx *GeneratorContext) any {
+	example := make(map[string]any)
+
+	for propName, propType := range o.PropertyTypes.FromOldest() {
+		example[propName] = propType.BuildExample(ctx)
+	}
+
+	return example
+}

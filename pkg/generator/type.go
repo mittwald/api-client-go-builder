@@ -11,7 +11,7 @@ type Type interface {
 	IsLightweight() bool
 	EmitDeclaration(ctx *GeneratorContext) []generator.Statement
 	EmitReference(ctx *GeneratorContext) string
-	BuildExample() any
+	BuildExample(ctx *GeneratorContext) any
 }
 
 type TypeWithTestcases interface {

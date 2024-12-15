@@ -25,7 +25,7 @@ func (o *FloatType) EmitReference(*GeneratorContext) string {
 	return "float64"
 }
 
-func (o *FloatType) BuildExample() any {
+func (o *FloatType) BuildExample(*GeneratorContext) any {
 	if ex := o.schema.Schema().Example; ex != nil {
 		var decoded float64
 		if err := ex.Decode(&decoded); err == nil {

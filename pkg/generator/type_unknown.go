@@ -29,6 +29,6 @@ func (o *UnknownType) EmitReference(*GeneratorContext) string {
 	return "any"
 }
 
-func (o *UnknownType) BuildExample() any {
+func (o *UnknownType) BuildExample(*GeneratorContext) any {
 	return nil
 }

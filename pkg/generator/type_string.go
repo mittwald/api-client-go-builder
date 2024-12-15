@@ -25,7 +25,7 @@ func (o *StringType) EmitReference(*GeneratorContext) string {
 	return "string"
 }
 
-func (o *StringType) BuildExample() any {
+func (o *StringType) BuildExample(*GeneratorContext) any {
 	if example := o.schema.Schema().Example; example != nil {
 		return example.Value
 	}

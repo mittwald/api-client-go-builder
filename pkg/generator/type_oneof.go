@@ -79,7 +79,8 @@ func (o *OneOfType) emitJSONUnmarshalFunc(ctx *GeneratorContext) generator.State
 	jsonUnmarshalStmts := make([]generator.Statement, 0)
 
 	jsonUnmarshalStmts = append(jsonUnmarshalStmts,
-		generator.NewRawStatement("dec := json.NewDecoder(bytes.NewReader(input))"),
+		generator.NewRawStatement("reader := bytes.NewReader(input)"),
+		generator.NewRawStatement("dec := json.NewDecoder(reader)"),
 		generator.NewRawStatement("dec.DisallowUnknownFields()"),
 		generator.NewNewline(),
 	)
@@ -94,6 +95,7 @@ func (o *OneOfType) emitJSONUnmarshalFunc(ctx *GeneratorContext) generator.State
 
 		if v, ok := alt.(TypeWithValidation); ok {
 			unmarshalCondition = unmarshalCondition.AddStatements(
+				generator.NewCommentf("subtype: %T", alt),
 				generator.NewIf(fmt.Sprintf("vErr := %s; vErr == nil", v.EmitValidation(localName, ctx)),
 					generator.NewRawStatementf("a.%s = &%s", name, localName),
 					generator.NewReturnStatement("nil"),
@@ -107,6 +109,7 @@ func (o *OneOfType) emitJSONUnmarshalFunc(ctx *GeneratorContext) generator.State
 		}
 
 		jsonUnmarshalStmts = append(jsonUnmarshalStmts,
+			generator.NewRawStatement("reader.Reset(input)"),
 			generator.NewRawStatementf("var %s %s", localName, alt.EmitReference(ctx)),
 			unmarshalCondition,
 			generator.NewNewline(),
@@ -159,6 +162,6 @@ func (o *OneOfType) EmitValidation(ref string, ctx *GeneratorContext) string {
 	return ref + ".Validate()"
 }
 
-func (o *OneOfType) BuildExample() any {
-	return o.AlternativeTypes[0].BuildExample()
+func (o *OneOfType) BuildExample(ctx *GeneratorContext) any {
+	return o.AlternativeTypes[0].BuildExample(ctx)
 }

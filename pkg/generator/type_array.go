@@ -72,6 +72,6 @@ func (o *ArrayType) EmitValidation(ref string, ctx *GeneratorContext) string {
 	return "nil"
 }
 
-func (o *ArrayType) BuildExample() any {
-	return []any{o.ItemType.BuildExample()}
+func (o *ArrayType) BuildExample(ctx *GeneratorContext) any {
+	return []any{o.ItemType.BuildExample(ctx)}
 }
