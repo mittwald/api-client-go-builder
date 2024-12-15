@@ -24,3 +24,15 @@ func (o *StringType) EmitReference(*GeneratorContext) string {
 	//return fmt.Sprintf("%s.%s", o.Names.PackageKey, o.Names.StructName)
 	return "string"
 }
+
+func (o *StringType) BuildExample() any {
+	if example := o.schema.Schema().Example; example != nil {
+		return example.Value
+	}
+
+	if examples := o.schema.Schema().Examples; len(examples) > 0 {
+		return examples[0].Value
+	}
+
+	return "string"
+}

@@ -36,15 +36,17 @@ func (o *MapType) EmitDeclaration(ctx *GeneratorContext) []generator.Statement {
 
 func (o *MapType) EmitReference(ctx *GeneratorContext) string {
 	return "map[string]" + o.ItemType.EmitReference(ctx)
+}
 
-	//innerRef := o.ItemType.EmitReference(ctx)
-	//if o.ItemType.IsLightweight() || strings.HasSuffix(innerRef, "Item") {
-	//	return "map[string]" + o.ItemType.EmitReference(ctx)
-	//}
-	//
-	//if ctx.CurrentPackage == o.Names.PackageKey {
-	//	return o.Names.StructName
-	//}
-	//
-	//return fmt.Sprintf("%s.%s", o.Names.PackageKey, o.Names.StructName)
+func (o *MapType) BuildExample() any {
+	if ex := o.schema.Schema().Example; ex != nil {
+		var decoded map[string]any
+		if err := ex.Decode(&decoded); err == nil {
+			return decoded
+		}
+	}
+
+	return map[string]any{
+		"string": o.ItemType.BuildExample(),
+	}
 }

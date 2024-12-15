@@ -158,3 +158,7 @@ func (o *OneOfType) EmitReference(ctx *GeneratorContext) string {
 func (o *OneOfType) EmitValidation(ref string, ctx *GeneratorContext) string {
 	return ref + ".Validate()"
 }
+
+func (o *OneOfType) BuildExample() any {
+	return o.AlternativeTypes[0].BuildExample()
+}

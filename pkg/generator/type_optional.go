@@ -59,3 +59,7 @@ func (o *OptionalType) EmitValidation(ref string, ctx *GeneratorContext) string 
 	}
 	return "nil"
 }
+
+func (o *OptionalType) BuildExample() any {
+	return o.InnerType.BuildExample()
+}

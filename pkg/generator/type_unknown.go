@@ -28,3 +28,7 @@ func (o *UnknownType) EmitReference(*GeneratorContext) string {
 	//return fmt.Sprintf("%s.%s", o.Names.PackageKey, o.Names.StructName)
 	return "any"
 }
+
+func (o *UnknownType) BuildExample() any {
+	return nil
+}

@@ -78,3 +78,7 @@ func (o *StringEnumType) EmitReference(ctx *GeneratorContext) string {
 func (o *StringEnumType) EmitValidation(ref string, _ *GeneratorContext) string {
 	return fmt.Sprintf("%s.Validate()", ref)
 }
+
+func (o *StringEnumType) BuildExample() any {
+	return o.Cases[0]
+}

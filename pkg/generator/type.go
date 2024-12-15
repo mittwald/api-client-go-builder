@@ -11,6 +11,7 @@ type Type interface {
 	IsLightweight() bool
 	EmitDeclaration(ctx *GeneratorContext) []generator.Statement
 	EmitReference(ctx *GeneratorContext) string
+	BuildExample() any
 }
 
 type TypeWithValidation interface {

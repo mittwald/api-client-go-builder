@@ -52,3 +52,7 @@ func (o *ReferenceType) EmitValidation(ref string, ctx *GeneratorContext) string
 	}
 	return "nil"
 }
+
+func (o *ReferenceType) BuildExample() any {
+	return o.TargetType.BuildExample()
+}

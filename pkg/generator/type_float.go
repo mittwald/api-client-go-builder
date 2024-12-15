@@ -24,3 +24,14 @@ func (o *FloatType) EmitReference(*GeneratorContext) string {
 	//return fmt.Sprintf("%s.%s", o.Names.PackageKey, o.Names.StructName)
 	return "float64"
 }
+
+func (o *FloatType) BuildExample() any {
+	if ex := o.schema.Schema().Example; ex != nil {
+		var decoded float64
+		if err := ex.Decode(&decoded); err == nil {
+			return decoded
+		}
+	}
+
+	return 3.14
+}

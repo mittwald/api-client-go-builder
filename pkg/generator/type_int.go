@@ -24,3 +24,14 @@ func (o *IntType) EmitReference(*GeneratorContext) string {
 	//return fmt.Sprintf("%s.%s", o.Names.PackageKey, o.Names.StructName)
 	return "int64"
 }
+
+func (o *IntType) BuildExample() any {
+	if ex := o.schema.Schema().Example; ex != nil {
+		var decoded int64
+		if err := ex.Decode(&decoded); err == nil {
+			return decoded
+		}
+	}
+
+	return 42
+}
