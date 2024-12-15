@@ -1,7 +1,6 @@
 package generator
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/charmbracelet/log"
 	"github.com/moznion/gowrtr/generator"
@@ -18,10 +17,18 @@ func (o *ReferenceType) IsLightweight() bool {
 	return true
 }
 
+func (o *ReferenceType) BuildSubtypes(store *TypeStore) error {
+	target, err := store.LookupReference(o.Target)
+	if err != nil {
+		return fmt.Errorf("could not resolve reference '%s': %w", o.Target, err)
+	}
+
+	o.BaseType.Names = target.Name()
+	return nil
+}
+
 func (o *ReferenceType) EmitDeclaration(ctx *GeneratorContext) []generator.Statement {
-	output, _ := json.Marshal(o.Schema.Schema())
 	return []generator.Statement{
-		generator.NewComment(string(output)),
 		generator.NewRawStatementf("type %s = %s", o.Names.StructName, o.EmitReference(ctx)),
 	}
 }
@@ -32,7 +39,7 @@ func (o *ReferenceType) EmitReference(ctx *GeneratorContext) string {
 		return target.EmitReference(ctx)
 	}
 
-	log.Warn("could resolve reference", "ref", o.Target, "err", err)
+	log.Warn("could not resolve reference", "ref", o.Target, "err", err)
 	return fmt.Sprintf("ERROR /* could not resolve %s */", o.Target)
 	//return "any"
 }

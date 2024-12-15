@@ -1,7 +1,6 @@
 package generator
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/mittwald/api-client-go-builder/pkg/util"
 	"github.com/moznion/gowrtr/generator"
@@ -30,10 +29,7 @@ func (o *StringEnumType) IsLightweight() bool {
 }
 
 func (o *StringEnumType) EmitDeclaration(*GeneratorContext) []generator.Statement {
-	output, _ := json.Marshal(o.Schema.Schema())
-
 	stmts := []generator.Statement{
-		generator.NewComment(string(output)),
 		generator.NewRawStatementf("type %s = string", o.Names.StructName),
 		generator.NewNewline(),
 	}

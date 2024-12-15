@@ -1,7 +1,6 @@
 package generator
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/mittwald/api-client-go-builder/pkg/util"
 	"github.com/moznion/gowrtr/generator"
@@ -20,7 +19,7 @@ func (o *ObjectType) IsLightweight() bool {
 }
 
 func (o *ObjectType) BuildSubtypes(store *TypeStore) error {
-	s := o.Schema.Schema()
+	s := o.schema.Schema()
 
 	o.PropertyTypes = orderedmap.New[string, Type]()
 
@@ -39,8 +38,7 @@ func (o *ObjectType) BuildSubtypes(store *TypeStore) error {
 }
 
 func (o *ObjectType) EmitDeclaration(ctx *GeneratorContext) []generator.Statement {
-	s := o.Schema.Schema()
-	output, _ := json.Marshal(o.Schema.Schema())
+	s := o.schema.Schema()
 
 	structDecl := generator.NewStruct(o.Names.StructName)
 	for propName, propType := range o.PropertyTypes.FromOldest() {
@@ -53,10 +51,6 @@ func (o *ObjectType) EmitDeclaration(ctx *GeneratorContext) []generator.Statemen
 	}
 
 	return []generator.Statement{
-		generator.NewCommentf("This type was generated from the following JSON schema:"),
-		generator.NewComment(string(output)),
-		generator.NewNewline(),
-
 		generator.NewComment(s.Description),
 		structDecl,
 	}

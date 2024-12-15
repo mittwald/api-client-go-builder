@@ -2,18 +2,31 @@ package generator
 
 import (
 	"fmt"
-	"github.com/charmbracelet/log"
 	"github.com/pb33f/libopenapi/datamodel/high/base"
 )
 
 func BuildTypeFromSchema(names SchemaName, schema *base.SchemaProxy, knownTypes *TypeStore) (Type, error) {
-	baseType := BaseType{Names: names, Schema: schema}
+	baseType := BaseType{Names: names, schema: schema}
 	format := schema.Schema().Format
 
 	if schema.IsReference() {
 		return &ReferenceType{BaseType: baseType, Target: schema.GetReference()}, nil
 		//ref := schema.GetReference()
 		//return knownTypes.LookupReference(ref)
+	}
+
+	if len(schema.Schema().OneOf) > 0 {
+		alternativeTypes := make([]Type, len(schema.Schema().OneOf))
+		for i, altSchema := range schema.Schema().OneOf {
+			altType, err := BuildTypeFromSchema(names.ForSubtype(fmt.Sprintf("alternative%d", i+1)), altSchema, knownTypes)
+			if err != nil {
+				return nil, fmt.Errorf("error building alternative type %i for %s: %w", i, names.StructName, err)
+			}
+
+			alternativeTypes[i] = altType
+		}
+
+		return &OneOfType{BaseType: baseType, AlternativeTypes: alternativeTypes}, nil
 	}
 
 	schemaType, err := GuessTypeFromSchema(schema)
@@ -24,13 +37,12 @@ func BuildTypeFromSchema(names SchemaName, schema *base.SchemaProxy, knownTypes 
 	switch schemaType {
 	case "object":
 		additionalProperties := schema.Schema().AdditionalProperties
-		if additionalProperties != nil {
+		if additionalProperties != nil && (additionalProperties.IsA() || (additionalProperties.IsB() && additionalProperties.B)) {
 			var itemType Type = &UnknownType{baseType}
 			var err error
 
 			if additionalProperties.IsA() {
 				itemType, err = BuildTypeFromSchema(names.ForSubtype("item"), additionalProperties.A, knownTypes)
-				log.Debug("building map sub type", "name", names, "itemtype", itemType)
 			}
 
 			if err != nil {

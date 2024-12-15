@@ -3,6 +3,9 @@ package generator
 import (
 	"fmt"
 	"github.com/charmbracelet/log"
+	"github.com/mittwald/api-client-go-builder/pkg/generatorx"
+	"github.com/moznion/gowrtr/generator"
+	"os/exec"
 	"strings"
 )
 
@@ -76,7 +79,7 @@ func (s *TypeStore) BuildSubtypes() error {
 func (s *TypeStore) EmitDeclarations(targetPath string) error {
 	log.Info("emitting declarations", "count", s.Len())
 
-	ctx := GeneratorContext{KnownTypes: s}
+	ctx := GeneratorContext{KnownTypes: s, WithDebuggingComments: true}
 
 	buildType := func(typ Type) error {
 		ctxForType := ctx
@@ -88,9 +91,18 @@ func (s *TypeStore) EmitDeclarations(targetPath string) error {
 		log.Infof("emitting declaration for %s", names.StructName)
 
 		// without Goimports(); does not make sense until the very end
-		root := names.BuildRoot().
-			AddStatements(stmts...).
-			Gofmt("-s")
+		root := names.BuildRoot()
+
+		if ctxForType.WithDebuggingComments {
+			schemaJson, _ := typ.Schema().Render()
+			root = root.AddStatements(
+				generator.NewComment("This data type was generated from the following JSON schema:"),
+				generatorx.NewMultilineComment(string(schemaJson)),
+			)
+		}
+
+		root = root.AddStatements(stmts...)
+		root = root.Gofmt("-s")
 
 		return EmitToFile(targetPath, names, root)
 	}
@@ -109,6 +121,12 @@ func (s *TypeStore) EmitDeclarations(targetPath string) error {
 		if err := buildType(typ); err != nil {
 			return err
 		}
+	}
+
+	log.Info("running goimports")
+	cmd := exec.Command("goimports", "-w", targetPath)
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("error running goimports: %w", err)
 	}
 
 	return nil

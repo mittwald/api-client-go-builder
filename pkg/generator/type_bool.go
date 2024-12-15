@@ -1,7 +1,6 @@
 package generator
 
 import (
-	"encoding/json"
 	"github.com/moznion/gowrtr/generator"
 )
 
@@ -16,9 +15,7 @@ func (o *BoolType) IsLightweight() bool {
 }
 
 func (o *BoolType) EmitDeclaration(*GeneratorContext) []generator.Statement {
-	output, _ := json.Marshal(o.Schema.Schema())
 	return []generator.Statement{
-		generator.NewComment(string(output)),
 		generator.NewRawStatementf("type %s = bool", o.Names.StructName),
 	}
 }

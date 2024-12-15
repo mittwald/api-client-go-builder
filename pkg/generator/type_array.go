@@ -1,7 +1,6 @@
 package generator
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/moznion/gowrtr/generator"
 	"strings"
@@ -30,9 +29,7 @@ func (o *ArrayType) IsLightweight() bool {
 }
 
 func (o *ArrayType) EmitDeclaration(ctx *GeneratorContext) []generator.Statement {
-	output, _ := json.Marshal(o.Schema.Schema())
 	return []generator.Statement{
-		generator.NewComment(string(output)),
 		generator.NewCommentf("item type: %#v", o.ItemType),
 		generator.NewRawStatementf("type %s = []%s", o.Names.StructName, o.ItemType.EmitReference(ctx)),
 	}

@@ -16,7 +16,7 @@ func (o *UnknownType) IsLightweight() bool {
 }
 
 func (o *UnknownType) EmitDeclaration(*GeneratorContext) []generator.Statement {
-	output, _ := json.Marshal(o.Schema.Schema())
+	output, _ := json.Marshal(o.schema.Schema())
 	return []generator.Statement{
 		generator.NewCommentf("TODO: This schema could not be automatically generated"),
 		generator.NewComment(string(output)),
