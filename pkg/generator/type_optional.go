@@ -60,6 +60,10 @@ func (o *OptionalType) EmitValidation(ref string, ctx *GeneratorContext) string 
 	return "nil"
 }
 
-func (o *OptionalType) BuildExample(ctx *GeneratorContext) any {
-	return o.InnerType.BuildExample(ctx)
+func (o *OptionalType) BuildExample(ctx *GeneratorContext, level, maxLevel int) any {
+	if level == maxLevel {
+		return nil
+	}
+
+	return o.InnerType.BuildExample(ctx, level+1, maxLevel)
 }

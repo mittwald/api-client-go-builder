@@ -47,7 +47,7 @@ func MittwaldV1Strategy(schemaName string) SchemaName {
 	// Example:
 	// de.mittwald.v1.sshuser.SshUser
 	parts := strings.Split(schemaName, ".")
-	name := parts[len(parts)-1]
+	name := util.UpperFirst(parts[len(parts)-1])
 	pkg := parts[len(parts)-2]
 	version := parts[len(parts)-3]
 

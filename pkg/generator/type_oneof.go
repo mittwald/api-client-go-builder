@@ -171,6 +171,6 @@ func (o *OneOfType) EmitValidation(ref string, ctx *GeneratorContext) string {
 	return ref + ".Validate()"
 }
 
-func (o *OneOfType) BuildExample(ctx *GeneratorContext) any {
-	return o.AlternativeTypes[0].BuildExample(ctx)
+func (o *OneOfType) BuildExample(ctx *GeneratorContext, level, maxLevel int) any {
+	return o.AlternativeTypes[0].BuildExample(ctx, level, maxLevel)
 }

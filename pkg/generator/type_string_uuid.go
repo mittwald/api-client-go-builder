@@ -30,7 +30,7 @@ func (o *StringUUIDType) EmitReference(ctx *GeneratorContext) string {
 	return "uuid.UUID"
 }
 
-func (o *StringUUIDType) BuildExample(*GeneratorContext) any {
+func (o *StringUUIDType) BuildExample(*GeneratorContext, int, int) any {
 	if example := o.schema.Schema().Example; example != nil {
 		return example.Value
 	}

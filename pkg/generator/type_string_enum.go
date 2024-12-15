@@ -79,6 +79,6 @@ func (o *StringEnumType) EmitValidation(ref string, _ *GeneratorContext) string 
 	return fmt.Sprintf("%s.Validate()", ref)
 }
 
-func (o *StringEnumType) BuildExample(*GeneratorContext) any {
+func (o *StringEnumType) BuildExample(*GeneratorContext, int, int) any {
 	return o.Cases[0]
 }

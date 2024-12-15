@@ -80,6 +80,9 @@ func (o *ArrayType) EmitValidation(ref string, ctx *GeneratorContext) string {
 	return "nil"
 }
 
-func (o *ArrayType) BuildExample(ctx *GeneratorContext) any {
-	return []any{o.ItemType.BuildExample(ctx)}
+func (o *ArrayType) BuildExample(ctx *GeneratorContext, level, maxLevel int) any {
+	if level == maxLevel {
+		return []any{}
+	}
+	return []any{o.ItemType.BuildExample(ctx, level+1, maxLevel)}
 }

@@ -24,7 +24,7 @@ func (o *BoolType) EmitReference(*GeneratorContext) string {
 	return "bool"
 }
 
-func (o *BoolType) BuildExample(*GeneratorContext) any {
+func (o *BoolType) BuildExample(*GeneratorContext, int, int) any {
 	if ex := o.schema.Schema().Example; ex != nil {
 		var decoded bool
 		if err := ex.Decode(&decoded); err == nil {

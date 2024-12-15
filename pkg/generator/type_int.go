@@ -25,7 +25,7 @@ func (o *IntType) EmitReference(*GeneratorContext) string {
 	return "int64"
 }
 
-func (o *IntType) BuildExample(*GeneratorContext) any {
+func (o *IntType) BuildExample(*GeneratorContext, int, int) any {
 	if ex := o.schema.Schema().Example; ex != nil {
 		var decoded int64
 		if err := ex.Decode(&decoded); err == nil {

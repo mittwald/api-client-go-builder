@@ -119,11 +119,11 @@ func (o *ObjectType) EmitValidation(ref string, _ *GeneratorContext) string {
 	return fmt.Sprintf("%s.Validate()", ref)
 }
 
-func (o *ObjectType) BuildExample(ctx *GeneratorContext) any {
+func (o *ObjectType) BuildExample(ctx *GeneratorContext, level, maxLevel int) any {
 	example := make(map[string]any)
 
 	for propName, propType := range o.PropertyTypes.FromOldest() {
-		example[propName] = propType.BuildExample(ctx)
+		example[propName] = propType.BuildExample(ctx, level+1, maxLevel)
 	}
 
 	return example

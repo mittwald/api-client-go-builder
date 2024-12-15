@@ -2,7 +2,6 @@ package generator
 
 import (
 	"fmt"
-	"github.com/charmbracelet/log"
 	"github.com/moznion/gowrtr/generator"
 )
 
@@ -29,6 +28,15 @@ func (o *ReferenceType) BuildSubtypes(store *TypeStore) error {
 	return nil
 }
 
+func (o *ReferenceType) lookupReferenceOnce(ctx *GeneratorContext) Type {
+	if o.TargetType != nil {
+		return o.TargetType
+	}
+
+	o.TargetType, _ = ctx.KnownTypes.LookupReference(o.Target)
+	return o.TargetType
+}
+
 func (o *ReferenceType) EmitDeclaration(ctx *GeneratorContext) []generator.Statement {
 	return []generator.Statement{
 		generator.NewRawStatementf("type %s = %s", o.Names.StructName, o.EmitReference(ctx)),
@@ -36,25 +44,24 @@ func (o *ReferenceType) EmitDeclaration(ctx *GeneratorContext) []generator.State
 }
 
 func (o *ReferenceType) EmitReference(ctx *GeneratorContext) string {
-	target, err := ctx.KnownTypes.LookupReference(o.Target)
-	if err == nil {
+	target := o.lookupReferenceOnce(ctx)
+	if target != nil {
 		return target.EmitReference(ctx)
 	}
 
-	log.Warn("could not resolve reference", "ref", o.Target, "err", err)
 	return fmt.Sprintf("ERROR /* could not resolve %s */", o.Target)
 	//return "any"
 }
 
 func (o *ReferenceType) EmitValidation(ref string, ctx *GeneratorContext) string {
-	target, _ := ctx.KnownTypes.LookupReference(o.Target)
+	target := o.lookupReferenceOnce(ctx)
 	if v, ok := target.(TypeWithValidation); ok {
 		return v.EmitValidation(ref, ctx)
 	}
 	return "nil"
 }
 
-func (o *ReferenceType) BuildExample(ctx *GeneratorContext) any {
-	target, _ := ctx.KnownTypes.LookupReference(o.Target)
-	return target.BuildExample(ctx)
+func (o *ReferenceType) BuildExample(ctx *GeneratorContext, level, maxLevel int) any {
+	target := o.lookupReferenceOnce(ctx)
+	return target.BuildExample(ctx, level+1, maxLevel)
 }

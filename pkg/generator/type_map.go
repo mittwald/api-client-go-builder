@@ -38,7 +38,11 @@ func (o *MapType) EmitReference(ctx *GeneratorContext) string {
 	return "map[string]" + o.ItemType.EmitReference(ctx)
 }
 
-func (o *MapType) BuildExample(ctx *GeneratorContext) any {
+func (o *MapType) BuildExample(ctx *GeneratorContext, level, maxLevel int) any {
+	if level == maxLevel {
+		return map[string]any{}
+	}
+
 	if ex := o.schema.Schema().Example; ex != nil {
 		var decoded map[string]any
 		if err := ex.Decode(&decoded); err == nil {
@@ -47,6 +51,6 @@ func (o *MapType) BuildExample(ctx *GeneratorContext) any {
 	}
 
 	return map[string]any{
-		"string": o.ItemType.BuildExample(ctx),
+		"string": o.ItemType.BuildExample(ctx, level+1, maxLevel),
 	}
 }

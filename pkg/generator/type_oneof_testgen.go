@@ -14,7 +14,7 @@ func (o *OneOfType) EmitTestCases(ctx *GeneratorContext) []generator.Statement {
 	unmarshalSuiteFunc := generator.NewAnonymousFunc(false, generator.NewAnonymousFuncSignature())
 
 	for i, alt := range o.AlternativeTypes {
-		example := alt.BuildExample(ctx)
+		example := alt.BuildExample(ctx, 0, 5)
 		exampleJSON, _ := json.Marshal(example)
 
 		testCaseName := fmt.Sprintf("should unmarshal into %s", o.alternativeName(i))
