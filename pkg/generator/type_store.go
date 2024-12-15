@@ -105,7 +105,24 @@ func (s *TypeStore) EmitDeclarations(targetPath string) error {
 		root = root.AddStatements(stmts...)
 		root = root.Gofmt("-s")
 
-		return EmitToFile(targetPath, names, root)
+		if err := EmitToFile(targetPath, names, root); err != nil {
+			return err
+		}
+
+		if tc, ok := typ.(TypeWithTestcases); ok {
+			testNames := names.ForTestcase()
+			testRoot := testNames.BuildRoot()
+
+			testStmts := tc.EmitTestCases(&ctx)
+			testRoot = testRoot.AddStatements(testStmts...)
+			testRoot = testRoot.Gofmt("-s")
+
+			if err := EmitToFile(targetPath, testNames, testRoot); err != nil {
+				return err
+			}
+		}
+
+		return nil
 	}
 
 	for _, typ := range s.ComponentSchemas {

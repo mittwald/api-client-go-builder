@@ -21,6 +21,13 @@ func (n *SchemaName) ForSubtype(subtype string) SchemaName {
 	return n2
 }
 
+func (n *SchemaName) ForTestcase() SchemaName {
+	n2 := *n
+	n2.PackagePath = strings.Replace(n2.PackagePath, ".go", "_test.go", 1)
+
+	return n2
+}
+
 func (n *SchemaName) BuildRoot() *generator.Root {
 	return generator.NewRoot(
 		generator.NewComment(" THIS CODE WAS AUTO GENERATED"),

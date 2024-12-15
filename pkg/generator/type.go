@@ -14,6 +14,10 @@ type Type interface {
 	BuildExample() any
 }
 
+type TypeWithTestcases interface {
+	EmitTestCases(ctx *GeneratorContext) []generator.Statement
+}
+
 type TypeWithValidation interface {
 	EmitValidation(ref string, ctx *GeneratorContext) string
 }
