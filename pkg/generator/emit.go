@@ -7,8 +7,8 @@ import (
 	"path"
 )
 
-func EmitToFile(targetPath string, names SchemaName, gen *generator.Root) error {
-	outputPath := path.Join(targetPath, names.PackagePath)
+func EmitToFile(targetPath, pkgPath string, gen *generator.Root) error {
+	outputPath := path.Join(targetPath, pkgPath)
 	dirname := path.Dir(outputPath)
 	if err := os.MkdirAll(dirname, 0o755); err != nil {
 		return fmt.Errorf("error while mkdir'ing '%s': %w", dirname, err)

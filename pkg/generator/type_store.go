@@ -6,6 +6,7 @@ import (
 	"github.com/mittwald/api-client-go-builder/pkg/generatorx"
 	"github.com/moznion/gowrtr/generator"
 	"os/exec"
+	"path"
 	"strings"
 )
 
@@ -81,6 +82,8 @@ func (s *TypeStore) EmitDeclarations(targetPath string) error {
 
 	ctx := GeneratorContext{KnownTypes: s, WithDebuggingComments: true}
 
+	packagesWithTestcases := make(map[string]string)
+
 	buildType := func(typ Type) error {
 		ctxForType := ctx
 		ctxForType.CurrentPackage = typ.Name().PackageKey
@@ -105,7 +108,7 @@ func (s *TypeStore) EmitDeclarations(targetPath string) error {
 		root = root.AddStatements(stmts...)
 		root = root.Gofmt("-s")
 
-		if err := EmitToFile(targetPath, names, root); err != nil {
+		if err := EmitToFile(targetPath, names.PackagePath, root); err != nil {
 			return err
 		}
 
@@ -113,11 +116,15 @@ func (s *TypeStore) EmitDeclarations(targetPath string) error {
 			testNames := names.ForTestcase()
 			testRoot := testNames.BuildRoot()
 
+			packagesWithTestcases[testNames.PackageKey] = path.Join(path.Dir(names.PackagePath), "suite_test.go")
+
 			testStmts := tc.EmitTestCases(&ctx)
+			testRoot = testRoot.AddStatements(generator.NewRawStatement("import . \"github.com/onsi/ginkgo/v2\""))
+			testRoot = testRoot.AddStatements(generator.NewRawStatement("import . \"github.com/onsi/gomega\""))
 			testRoot = testRoot.AddStatements(testStmts...)
 			testRoot = testRoot.Gofmt("-s")
 
-			if err := EmitToFile(targetPath, testNames, testRoot); err != nil {
+			if err := EmitToFile(targetPath, testNames.PackagePath, testRoot); err != nil {
 				return err
 			}
 		}
@@ -137,6 +144,24 @@ func (s *TypeStore) EmitDeclarations(targetPath string) error {
 		}
 
 		if err := buildType(typ); err != nil {
+			return err
+		}
+	}
+
+	log.Info("generating test suites")
+	for pkg, pkgPath := range packagesWithTestcases {
+		suiteRoot := generator.NewRoot(
+			generator.NewPackage(pkg),
+			generator.NewNewline(),
+			generator.NewRawStatement("import . \"github.com/onsi/ginkgo/v2\""),
+			generator.NewRawStatement("import . \"github.com/onsi/gomega\""),
+			generator.NewFunc(nil, generator.NewFuncSignature("TestTypes").AddParameters(generator.NewFuncParameter("t", "*testing.T")),
+				generator.NewRawStatement("RegisterFailHandler(Fail)"),
+				generator.NewRawStatementf("RunSpecs(t, \"%s types\")", pkg),
+			),
+		)
+
+		if err := EmitToFile(targetPath, pkgPath, suiteRoot); err != nil {
 			return err
 		}
 	}

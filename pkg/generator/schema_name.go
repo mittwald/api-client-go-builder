@@ -24,6 +24,7 @@ func (n *SchemaName) ForSubtype(subtype string) SchemaName {
 func (n *SchemaName) ForTestcase() SchemaName {
 	n2 := *n
 	n2.PackagePath = strings.Replace(n2.PackagePath, ".go", "_test.go", 1)
+	n2.PackageKey += "_test"
 
 	return n2
 }

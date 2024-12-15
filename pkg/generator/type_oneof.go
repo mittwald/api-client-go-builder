@@ -94,13 +94,22 @@ func (o *OneOfType) emitJSONUnmarshalFunc(ctx *GeneratorContext) generator.State
 		)
 
 		if v, ok := alt.(TypeWithValidation); ok {
-			unmarshalCondition = unmarshalCondition.AddStatements(
-				generator.NewCommentf("subtype: %T", alt),
-				generator.NewIf(fmt.Sprintf("vErr := %s; vErr == nil", v.EmitValidation(localName, ctx)),
+			validation := v.EmitValidation(localName, ctx)
+			if validation != "nil" {
+				unmarshalCondition = unmarshalCondition.AddStatements(
+					generator.NewCommentf("subtype: %T", alt),
+					generator.NewIf(fmt.Sprintf("vErr := %s; vErr == nil", validation),
+						generator.NewRawStatementf("a.%s = &%s", name, localName),
+						generator.NewReturnStatement("nil"),
+					),
+				)
+			} else {
+				unmarshalCondition = unmarshalCondition.AddStatements(
+					generator.NewCommentf("subtype: %T", alt),
 					generator.NewRawStatementf("a.%s = &%s", name, localName),
 					generator.NewReturnStatement("nil"),
-				),
-			)
+				)
+			}
 		} else {
 			unmarshalCondition = unmarshalCondition.AddStatements(
 				generator.NewRawStatementf("a.%s = &%s", name, localName),
