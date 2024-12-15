@@ -35,6 +35,8 @@ func (n *SchemaName) BuildRoot() *generator.Root {
 	return generator.NewRoot(
 		generator.NewComment(" THIS CODE WAS AUTO GENERATED"),
 		generator.NewPackage(n.PackageKey),
+		// we're running goimports after generating, so it does not matter if the uuid package is actually needed in a file
+		generator.NewImport("github.com/google/uuid"),
 		generator.NewNewline(),
 	)
 }

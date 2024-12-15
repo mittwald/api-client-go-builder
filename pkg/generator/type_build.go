@@ -11,8 +11,6 @@ func BuildTypeFromSchema(names SchemaName, schema *base.SchemaProxy, knownTypes 
 
 	if schema.IsReference() {
 		return &ReferenceType{BaseType: baseType, Target: schema.GetReference()}, nil
-		//ref := schema.GetReference()
-		//return knownTypes.LookupReference(ref)
 	}
 
 	if len(schema.Schema().OneOf) > 0 {
@@ -66,6 +64,9 @@ func BuildTypeFromSchema(names SchemaName, schema *base.SchemaProxy, knownTypes 
 	case "string":
 		if schema.Schema().Enum != nil {
 			return NewStringEnumTypeFromYamlNodes(baseType, schema.Schema().Enum), nil
+		}
+		if format == "uuid" {
+			return &StringUUIDType{BaseType: baseType}, nil
 		}
 		return &StringType{BaseType: baseType}, nil
 	case "bool", "boolean":
