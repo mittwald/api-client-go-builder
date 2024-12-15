@@ -11,7 +11,9 @@ var _ Type = &ObjectType{}
 
 type ObjectType struct {
 	BaseType
-	PropertyTypes *orderedmap.Map[string, Type]
+
+	PropertyTypes      *orderedmap.Map[string, Type]
+	RequiredProperties map[string]struct{}
 }
 
 func (o *ObjectType) IsLightweight() bool {
@@ -22,6 +24,10 @@ func (o *ObjectType) BuildSubtypes(store *TypeStore) error {
 	s := o.schema.Schema()
 
 	o.PropertyTypes = orderedmap.New[string, Type]()
+	o.RequiredProperties = make(map[string]struct{})
+	for _, req := range s.Required {
+		o.RequiredProperties[req] = struct{}{}
+	}
 
 	for propName, propSchema := range s.Properties.FromOldest() {
 		subTypeName := o.Names.ForSubtype(propName)
@@ -29,6 +35,10 @@ func (o *ObjectType) BuildSubtypes(store *TypeStore) error {
 		propertyType, err := BuildTypeFromSchema(subTypeName, propSchema, store)
 		if err != nil {
 			return fmt.Errorf("error building subtype for property '%s': %w", propName, err)
+		}
+
+		if _, isRequired := o.RequiredProperties[propName]; !isRequired {
+			propertyType = &OptionalType{InnerType: propertyType}
 		}
 
 		store.AddSubtype(subTypeName, propertyType)
@@ -42,11 +52,16 @@ func (o *ObjectType) EmitDeclaration(ctx *GeneratorContext) []generator.Statemen
 
 	structDecl := generator.NewStruct(o.Names.StructName)
 	for propName, propType := range o.PropertyTypes.FromOldest() {
+		jsonTag := propName
+		if _, isRequired := o.RequiredProperties[propName]; !isRequired {
+			jsonTag += ",omitempty"
+		}
+
 		fieldName := util.UpperFirst(propName)
 		structDecl = structDecl.AddField(
 			fieldName,
 			propType.EmitReference(ctx),
-			fmt.Sprintf("json:\"%s\"", propName),
+			fmt.Sprintf("json:\"%s\"", jsonTag),
 		)
 	}
 
