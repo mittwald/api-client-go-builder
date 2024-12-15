@@ -13,6 +13,10 @@ type Type interface {
 	EmitReference(ctx *GeneratorContext) string
 }
 
+type TypeWithValidation interface {
+	EmitValidation(ref string, ctx *GeneratorContext) string
+}
+
 type TypeWithSubtypes interface {
 	BuildSubtypes(store *TypeStore) error
 }

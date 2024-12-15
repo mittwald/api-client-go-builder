@@ -97,7 +97,8 @@ func (s *TypeStore) EmitDeclarations(targetPath string) error {
 			schemaJson, _ := typ.Schema().Render()
 			root = root.AddStatements(
 				generator.NewComment("This data type was generated from the following JSON schema:"),
-				generatorx.NewMultilineComment(string(schemaJson)),
+				generatorx.NewMultilineComment(strings.TrimRight(string(schemaJson), "\n")),
+				generator.NewNewline(),
 			)
 		}
 

@@ -10,7 +10,8 @@ var _ Type = &ReferenceType{}
 
 type ReferenceType struct {
 	BaseType
-	Target string
+	Target     string
+	TargetType Type
 }
 
 func (o *ReferenceType) IsLightweight() bool {
@@ -24,6 +25,7 @@ func (o *ReferenceType) BuildSubtypes(store *TypeStore) error {
 	}
 
 	o.BaseType.Names = target.Name()
+	o.TargetType = target
 	return nil
 }
 
@@ -42,4 +44,11 @@ func (o *ReferenceType) EmitReference(ctx *GeneratorContext) string {
 	log.Warn("could not resolve reference", "ref", o.Target, "err", err)
 	return fmt.Sprintf("ERROR /* could not resolve %s */", o.Target)
 	//return "any"
+}
+
+func (o *ReferenceType) EmitValidation(ref string, ctx *GeneratorContext) string {
+	if v, ok := o.TargetType.(TypeWithValidation); ok {
+		return v.EmitValidation(ref, ctx)
+	}
+	return "nil"
 }

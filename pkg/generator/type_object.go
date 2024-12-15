@@ -68,7 +68,44 @@ func (o *ObjectType) EmitDeclaration(ctx *GeneratorContext) []generator.Statemen
 	return []generator.Statement{
 		generator.NewComment(s.Description),
 		structDecl,
+		o.emitValidationFunction(ctx),
 	}
+}
+
+func (o *ObjectType) emitValidationFunction(ctx *GeneratorContext) generator.Statement {
+	stmts := make([]generator.Statement, 0)
+
+	for propName, propType := range o.PropertyTypes.FromOldest() {
+		ref := fmt.Sprintf("o.%s", util.UpperFirst(propName))
+
+		if _, req := o.RequiredProperties[propName]; req {
+			switch propType.(type) {
+			case *ArrayType, *MapType:
+				stmts = append(stmts, generator.NewIf(ref+" == nil", generator.NewReturnStatement(fmt.Sprintf("errors.New(\"property %s is required, but not set\")", propName))))
+			}
+		}
+
+		if v, ok := propType.(TypeWithValidation); ok {
+			validation := v.EmitValidation(ref, ctx)
+			if validation != "nil" {
+				stmts = append(
+					stmts,
+					generator.NewIf(
+						"err := "+v.EmitValidation(ref, ctx)+"; err != nil",
+						generator.NewReturnStatement(fmt.Sprintf("fmt.Errorf(\"invalid property %s: %%w\", err)", propName)),
+					),
+				)
+			}
+		}
+	}
+
+	stmts = append(stmts, generator.NewReturnStatement("nil"))
+
+	return generator.NewFunc(
+		generator.NewFuncReceiver("o", "*"+o.Names.StructName),
+		generator.NewFuncSignature("Validate").AddReturnTypes("error"),
+		stmts...,
+	)
 }
 
 func (o *ObjectType) EmitReference(ctx *GeneratorContext) string {
@@ -76,4 +113,8 @@ func (o *ObjectType) EmitReference(ctx *GeneratorContext) string {
 		return o.Names.StructName
 	}
 	return fmt.Sprintf("%s.%s", o.Names.PackageKey, o.Names.StructName)
+}
+
+func (o *ObjectType) EmitValidation(ref string, _ *GeneratorContext) string {
+	return fmt.Sprintf("%s.Validate()", ref)
 }

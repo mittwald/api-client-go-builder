@@ -1,7 +1,6 @@
 package generator
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/mittwald/api-client-go-builder/pkg/util"
 	"github.com/moznion/gowrtr/generator"
@@ -42,25 +41,81 @@ func (o *OneOfType) EmitDeclaration(ctx *GeneratorContext) []generator.Statement
 		structType = structType.AddField(name, "*"+alt.EmitReference(ctx))
 	}
 
-	baseSchemaName := util.LowerFirst(o.Names.StructName) + "Schema"
-	for i, alt := range o.AlternativeTypes {
-		schemaJson, _ := json.Marshal(alt.Schema().Schema())
-
-		name := baseSchemaName + o.alternativeName(i)
-		stmts = append(stmts, generator.NewRawStatementf("var %s = gojsonschema.NewStringLoader(%#v)", name, string(schemaJson)))
-	}
-
-	stmts = append(stmts, structType, o.emitJSONMarshalFunc(), o.emitJSONUnmarshalFunc())
+	stmts = append(stmts,
+		structType,
+		o.emitJSONMarshalFunc(),
+		generator.NewNewline(),
+		o.emitJSONUnmarshalFunc(ctx),
+		generator.NewNewline(),
+		o.emitValidateFunc(ctx),
+	)
 	return stmts
 }
 
-func (o *OneOfType) emitJSONUnmarshalFunc() generator.Statement {
+func (o *OneOfType) emitValidateFunc(ctx *GeneratorContext) generator.Statement {
+	validateStmts := make([]generator.Statement, 0)
+
+	for i, alt := range o.AlternativeTypes {
+		ref := fmt.Sprintf("a.%s", o.alternativeName(i))
+		if v, ok := alt.(TypeWithValidation); ok {
+			altValidation := v.EmitValidation(ref, ctx)
+			validateStmts = append(validateStmts,
+				generator.NewIf(ref+" != nil", generator.NewReturnStatement(altValidation)),
+			)
+		}
+	}
+
+	validateStmts = append(validateStmts, generator.NewReturnStatement("errors.New(\"no alternative set\")"))
+
+	return generator.NewFunc(
+		generator.NewFuncReceiver("a", fmt.Sprintf("*%s", o.Names.StructName)),
+		generator.NewFuncSignature("Validate").
+			AddReturnTypes("error"),
+		validateStmts...,
+	)
+}
+
+func (o *OneOfType) emitJSONUnmarshalFunc(ctx *GeneratorContext) generator.Statement {
 	jsonUnmarshalStmts := make([]generator.Statement, 0)
-	jsonUnmarshalStmts = append(jsonUnmarshalStmts, generator.NewRawStatement("inputLoader := gojsonschema.NewBytesLoader(input)"))
 
-	/*for i := range o.AlternativeTypes {
+	jsonUnmarshalStmts = append(jsonUnmarshalStmts,
+		generator.NewRawStatement("dec := json.NewDecoder(bytes.NewReader(input))"),
+		generator.NewRawStatement("dec.DisallowUnknownFields()"),
+		generator.NewNewline(),
+	)
 
-	}*/
+	for i, alt := range o.AlternativeTypes {
+		name := o.alternativeName(i)
+		localName := util.LowerFirst(name)
+
+		unmarshalCondition := generator.NewIf(
+			fmt.Sprintf("err := dec.Decode(&%s); err == nil", localName),
+		)
+
+		if v, ok := alt.(TypeWithValidation); ok {
+			unmarshalCondition = unmarshalCondition.AddStatements(
+				generator.NewIf(fmt.Sprintf("vErr := %s; vErr == nil", v.EmitValidation(localName, ctx)),
+					generator.NewRawStatementf("a.%s = &%s", name, localName),
+					generator.NewReturnStatement("nil"),
+				),
+			)
+		} else {
+			unmarshalCondition = unmarshalCondition.AddStatements(
+				generator.NewRawStatementf("a.%s = &%s", name, localName),
+				generator.NewReturnStatement("nil"),
+			)
+		}
+
+		jsonUnmarshalStmts = append(jsonUnmarshalStmts,
+			generator.NewRawStatementf("var %s %s", localName, alt.EmitReference(ctx)),
+			unmarshalCondition,
+			generator.NewNewline(),
+		)
+	}
+
+	jsonUnmarshalStmts = append(jsonUnmarshalStmts,
+		generator.NewReturnStatement("fmt.Errorf(\"could not unmarshal into any alternative for type %T\", a)"),
+	)
 
 	return generator.NewFunc(
 		generator.NewFuncReceiver("a", fmt.Sprintf("*%s", o.Names.StructName)),
@@ -98,4 +153,8 @@ func (o *OneOfType) EmitReference(ctx *GeneratorContext) string {
 	}
 
 	return fmt.Sprintf("%s.%s", o.Names.PackageKey, o.Names.StructName)
+}
+
+func (o *OneOfType) EmitValidation(ref string, ctx *GeneratorContext) string {
+	return ref + ".Validate()"
 }

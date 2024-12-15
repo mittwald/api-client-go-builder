@@ -70,6 +70,8 @@ func BuildTypeFromSchema(names SchemaName, schema *base.SchemaProxy, knownTypes 
 		return &StringType{BaseType: baseType}, nil
 	case "bool", "boolean":
 		return &BoolType{BaseType: baseType}, nil
+	case "integer":
+		return &IntType{BaseType: baseType}, nil
 	case "number":
 		if format == "int" || format == "integer" {
 			return &IntType{BaseType: baseType}, nil
