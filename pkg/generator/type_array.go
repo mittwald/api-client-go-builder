@@ -41,6 +41,14 @@ func (o *ArrayType) EmitDeclaration(ctx *GeneratorContext) []generator.Statement
 }
 
 func (o *ArrayType) EmitReference(ctx *GeneratorContext) string {
+	if o.Names.ForceNamedType {
+		if ctx.CurrentPackage == o.Names.PackageKey {
+			return o.Names.StructName
+		}
+
+		return fmt.Sprintf("%s.%s", o.Names.PackageKey, o.Names.StructName)
+	}
+
 	innerRef := o.ItemType.EmitReference(ctx)
 	if o.ItemType.IsLightweight() || strings.HasSuffix(innerRef, "Item") {
 		return "[]" + o.ItemType.EmitReference(ctx)

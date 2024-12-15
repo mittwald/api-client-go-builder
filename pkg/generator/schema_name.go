@@ -8,15 +8,17 @@ import (
 )
 
 type SchemaName struct {
-	PackageKey  string
-	PackagePath string
-	StructName  string
+	PackageKey     string
+	PackagePath    string
+	StructName     string
+	ForceNamedType bool
 }
 
 func (n *SchemaName) ForSubtype(subtype string) SchemaName {
 	n2 := *n
 	n2.StructName += util.UpperFirst(subtype)
 	n2.PackagePath = strings.Replace(n2.PackagePath, ".go", "_"+strings.ToLower(subtype)+".go", 1)
+	n2.ForceNamedType = false
 
 	return n2
 }
@@ -48,9 +50,10 @@ func MittwaldV1Strategy(schemaName string) SchemaName {
 	version := parts[len(parts)-3]
 
 	return SchemaName{
-		StructName:  name,
-		PackageKey:  pkg + version,
-		PackagePath: path.Join("schemas", pkg+version, strings.ToLower(name)+".go"),
+		StructName:     name,
+		PackageKey:     pkg + version,
+		PackagePath:    path.Join("schemas", pkg+version, strings.ToLower(name)+".go"),
+		ForceNamedType: true,
 	}
 
 }

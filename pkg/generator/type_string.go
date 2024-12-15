@@ -1,6 +1,8 @@
 package generator
 
 import (
+	"fmt"
+	"github.com/mittwald/api-client-go-builder/pkg/generatorx"
 	"github.com/moznion/gowrtr/generator"
 )
 
@@ -15,13 +17,23 @@ func (o *StringType) IsLightweight() bool {
 }
 
 func (o *StringType) EmitDeclaration(*GeneratorContext) []generator.Statement {
-	return []generator.Statement{
-		generator.NewRawStatementf("type %s = string", o.Names.StructName),
+	stmts := make([]generator.Statement, 0)
+
+	if d := o.schema.Schema().Description; d != "" {
+		stmts = append(stmts, generatorx.NewMultilineComment(d))
 	}
+
+	stmts = append(stmts, generator.NewRawStatementf("type %s string", o.Names.StructName))
+	return stmts
 }
 
-func (o *StringType) EmitReference(*GeneratorContext) string {
-	//return fmt.Sprintf("%s.%s", o.Names.PackageKey, o.Names.StructName)
+func (o *StringType) EmitReference(ctx *GeneratorContext) string {
+	if o.Names.ForceNamedType {
+		if ctx.CurrentPackage == o.Names.PackageKey {
+			return o.Names.StructName
+		}
+		return fmt.Sprintf("%s.%s", o.Names.PackageKey, o.Names.StructName)
+	}
 	return "string"
 }
 
