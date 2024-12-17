@@ -77,14 +77,19 @@ func (c *Client) BuildSubtypes(store *TypeStore) error {
 	return nil
 }
 
+func (c *Client) ImplName() string {
+	return util.LowerFirst(fmt.Sprintf("%sImpl", c.name.StructName))
+}
+
 func (c *Client) EmitDeclaration(ctx *GeneratorContext) []generator.Statement {
 	clientInterface := generator.NewInterface(c.name.StructName)
-	clientStruct := generator.NewStruct(c.name.StructName+"Impl").
+	clientStructName := c.ImplName()
+	clientStruct := generator.NewStruct(clientStructName).
 		AddField("Client", "*http.Client")
 
 	funcStmts := []generator.Statement{}
 
-	clientStructReceiver := generator.NewFuncReceiver("c", fmt.Sprintf("*%sImpl", c.name.StructName))
+	clientStructReceiver := generator.NewFuncReceiver("c", "*"+clientStructName)
 
 	for _, op := range c.operations {
 		if op.Operation.OperationId == "" {
