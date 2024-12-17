@@ -51,7 +51,7 @@ func (c *ClientSet) BuildSubtypes(store *TypeStore) error {
 		clientNameSet := c.name
 		clientNameSet.StructName = clientTypeName
 		clientNameSet.PackageKey = strings.ToLower(clientFunctionName)
-		clientNameSet.PackagePath = path.Join(path.Dir(clientNameSet.PackagePath), strings.ToLower(clientFunctionName), "client_interface.go")
+		clientNameSet.PackagePath = path.Join(path.Dir(clientNameSet.PackagePath), strings.ToLower(clientFunctionName), "client.go")
 
 		client := Client{
 			name:       clientNameSet,

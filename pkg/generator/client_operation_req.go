@@ -13,7 +13,9 @@ type ClientOperationRequest struct {
 	name      SchemaName
 	operation *OperationWithMeta
 
-	bodyType    Type
+	bodyType   Type
+	bodyFormat string
+
 	pathParams  *orderedmap.OrderedMap[string, SchemaType]
 	queryParams *orderedmap.OrderedMap[string, SchemaType]
 }
@@ -57,6 +59,8 @@ func (c *ClientOperationRequest) BuildSubtypes(store *TypeStore) error {
 			}
 
 			c.bodyType = bodyType
+			c.bodyFormat = "json"
+
 			store.AddSubtype(bodyName, bodyType)
 		}
 	}
@@ -87,16 +91,32 @@ func (c *ClientOperationRequest) EmitDeclaration(ctx *GeneratorContext) []genera
 		generator.NewReturnStatement(fmt.Sprintf("http.Method%s", util.UpperFirst(c.operation.Method))),
 	)
 
+	bodyFunc := c.buildBodyFunction()
 	urlFunc := c.buildURLFunction(ctx)
 	queryFunc := c.buildQueryFunction(ctx)
 
 	return []generator.Statement{
 		str,
-		methodFunc,
-		generator.NewNewline(),
-		urlFunc,
+		methodFunc, generator.NewNewline(),
+		bodyFunc, generator.NewNewline(),
+		urlFunc, generator.NewNewline(),
 		queryFunc,
 	}
+}
+
+func (c *ClientOperationRequest) buildBodyFunction() generator.Statement {
+	receiver := generator.NewFuncReceiver("r", "*"+c.name.StructName)
+	signature := generator.NewFuncSignature("body").AddReturnTypes("io.Reader", "error")
+
+	if c.bodyFormat == "json" {
+		return generator.NewFunc(receiver, signature,
+			generator.NewRawStatement("out, err := json.Marshal(&r.Body)"),
+			generator.NewIf("err != nil", generator.NewReturnStatement("nil", `fmt.Errorf("error while marshalling JSON: %w", err)`)),
+			generator.NewReturnStatement("bytes.NewReader(out)", "nil"),
+		)
+	}
+
+	return generator.NewFunc(receiver, signature, generator.NewReturnStatement("nil"))
 }
 
 func (c *ClientOperationRequest) buildQueryFunction(ctx *GeneratorContext) generator.Statement {

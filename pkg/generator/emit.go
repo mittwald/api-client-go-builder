@@ -19,6 +19,10 @@ func EmitToFile(targetPath, pkgPath string, gen *generator.Root) error {
 		return fmt.Errorf("error while generating code: %w", err)
 	}
 
+	if _, err := os.Stat(outputPath); err == nil {
+		return fmt.Errorf("file %s seems to already exist :/", outputPath)
+	}
+
 	if err := os.WriteFile(outputPath, []byte(code), 0o644); err != nil {
 		return fmt.Errorf("error writing to file %s: %w", outputPath, err)
 	}

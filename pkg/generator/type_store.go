@@ -76,9 +76,7 @@ func (s *TypeStore) BuildSubtypes() error {
 		return nil
 	}
 
-	processed := 0
-
-	for processed < s.Len() {
+	processAll := func() error {
 		for name, typ := range s.ComponentSchemas {
 			if err := buildSubtype(name, typ); err != nil {
 				return err
@@ -94,8 +92,20 @@ func (s *TypeStore) BuildSubtypes() error {
 				return err
 			}
 		}
+		return nil
+	}
 
+	processed := 0
+
+	for processed < s.Len() {
+		if err := processAll(); err != nil {
+			return err
+		}
 		processed = len(visited)
+	}
+
+	if err := processAll(); err != nil {
+		return err
 	}
 
 	return nil
@@ -108,7 +118,7 @@ func (s *TypeStore) EmitDeclarations(targetPath string) error {
 
 	packagesWithTestcases := make(map[string]string)
 
-	buildType := func(typ Type) error {
+	buildType := func(what string, typ Type) error {
 		ctxForType := ctx
 		ctxForType.CurrentPackage = typ.Name().PackageKey
 
@@ -135,7 +145,7 @@ func (s *TypeStore) EmitDeclarations(targetPath string) error {
 		//root = root.Gofmt("-s")
 
 		if err := EmitToFile(targetPath, names.PackagePath, root); err != nil {
-			return err
+			return fmt.Errorf("error emitting %s %T to %s: %w", what, typ, names.PackagePath, err)
 		}
 
 		if tc, ok := typ.(TypeWithTestcases); ok {
@@ -159,13 +169,19 @@ func (s *TypeStore) EmitDeclarations(targetPath string) error {
 	}
 
 	for _, typ := range s.ComponentSchemas {
-		if err := buildType(typ); err != nil {
+		if err := buildType("schema", typ); err != nil {
 			return err
 		}
 	}
 
 	for _, typ := range s.Clients {
-		if err := buildType(typ); err != nil {
+		if st, ok := typ.(SchemaType); ok {
+			if st.IsLightweight() {
+				continue
+			}
+		}
+
+		if err := buildType("client", typ); err != nil {
 			return err
 		}
 	}
@@ -177,7 +193,7 @@ func (s *TypeStore) EmitDeclarations(targetPath string) error {
 			}
 		}
 
-		if err := buildType(typ); err != nil {
+		if err := buildType("subtype", typ); err != nil {
 			return err
 		}
 	}

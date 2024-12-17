@@ -7,7 +7,7 @@ import (
 
 func (g *Generator) generateClients(opts GeneratorOpts, spec *libopenapi.DocumentModel[v3.Document], store *TypeStore) error {
 	baseName := SchemaName{
-		PackagePath: "clients/clientset_interface.go",
+		PackagePath: "clients/clientset.go",
 		PackageKey:  opts.BasePackageName,
 		StructName:  "Client",
 	}

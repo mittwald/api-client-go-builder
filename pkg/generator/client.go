@@ -3,10 +3,12 @@ package generator
 import (
 	"fmt"
 	"github.com/charmbracelet/log"
+	"github.com/mittwald/api-client-go-builder/pkg/generatorx"
 	"github.com/mittwald/api-client-go-builder/pkg/util"
 	"github.com/moznion/gowrtr/generator"
 	v3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 	"path"
+	"strconv"
 	"strings"
 )
 
@@ -15,8 +17,9 @@ type OperationWithMeta struct {
 	Method    string
 	Operation *v3.Operation
 
-	requestType  Type
-	responseType Type
+	requestType    Type
+	responseType   Type
+	responseFormat string
 }
 
 type Client struct {
@@ -42,10 +45,31 @@ func (c *Client) BuildSubtypes(store *TypeStore) error {
 		requestName.PackagePath = path.Join(path.Dir(requestName.PackagePath), strings.ToLower(operationName)+"_request.go")
 
 		responseName := c.name
-		responseName.StructName = operationName + "Request"
+		responseName.StructName = operationName + "Response"
 		responseName.PackagePath = path.Join(path.Dir(requestName.PackagePath), strings.ToLower(operationName)+"_response.go")
 
 		c.operations[i].requestType = &ClientOperationRequest{name: requestName, operation: &c.operations[i]}
+
+		for code, response := range c.operations[i].Operation.Responses.Codes.FromOldest() {
+			codeAsInt, err := strconv.ParseInt(code, 10, strconv.IntSize)
+			if err != nil {
+				return fmt.Errorf("response code %s of operation %s could not be parsed as int: %w", code, op.Operation.OperationId, err)
+			}
+
+			if codeAsInt >= 200 && codeAsInt < 400 && response.Content != nil {
+				if schema, ok := response.Content.Get("application/json"); ok {
+					responseType, err := BuildTypeFromSchema(responseName, schema.Schema, store)
+					if err != nil {
+						return fmt.Errorf("error building response type for operation %s: %w", op.Operation.OperationId, err)
+					}
+
+					c.operations[i].responseType = responseType
+					c.operations[i].responseFormat = "json"
+
+					store.AddClient(responseType)
+				}
+			}
+		}
 
 		store.AddClient(c.operations[i].requestType)
 	}
@@ -54,7 +78,13 @@ func (c *Client) BuildSubtypes(store *TypeStore) error {
 }
 
 func (c *Client) EmitDeclaration(ctx *GeneratorContext) []generator.Statement {
-	iface := generator.NewInterface(c.name.StructName)
+	clientInterface := generator.NewInterface(c.name.StructName)
+	clientStruct := generator.NewStruct(c.name.StructName+"Impl").
+		AddField("Client", "*http.Client")
+
+	funcStmts := []generator.Statement{}
+
+	clientStructReceiver := generator.NewFuncReceiver("c", fmt.Sprintf("*%sImpl", c.name.StructName))
 
 	for _, op := range c.operations {
 		if op.Operation.OperationId == "" {
@@ -63,18 +93,80 @@ func (c *Client) EmitDeclaration(ctx *GeneratorContext) []generator.Statement {
 		}
 
 		operationName := util.ConvertToTypename(op.Operation.OperationId)
-		request := operationName + "Request"
-		response := operationName + "Response"
 
-		iface = iface.AddSignatures(generator.NewFuncSignature(operationName).
+		funcSignature := generator.NewFuncSignature(operationName).
 			AddParameters(
 				generator.NewFuncParameter("ctx", "context.Context"),
-				generator.NewFuncParameter("req", request),
-			).
-			AddReturnTypes(response, "error"))
+				generator.NewFuncParameter("req", op.requestType.EmitReference(ctx)),
+			)
+
+		errorReturn := generator.NewReturnStatement("nil", "err")
+		errorReturnWithResponse := generator.NewReturnStatement("httpRes", "err")
+		if op.responseType != nil {
+			errorReturn = generator.NewReturnStatement("nil", "nil", "err")
+			errorReturnWithResponse = generator.NewReturnStatement("nil", "httpRes", "err")
+		}
+
+		operationFuncStmts := []generator.Statement{
+			generator.NewRawStatement("body, err := req.body()"),
+			generator.NewIf("err != nil", errorReturn),
+			generator.NewNewline(),
+			generator.NewRawStatement("httpReq, err := http.NewRequestWithContext(ctx, req.method(), req.url(), body)"),
+			generator.NewIf("err != nil", errorReturn),
+			generator.NewNewline(),
+			generator.NewRawStatement("httpRes, err := c.Client.Do(httpReq)"),
+			generator.NewIf("err != nil", errorReturnWithResponse),
+			generator.NewNewline(),
+		}
+
+		if op.responseType != nil {
+			funcSignature = funcSignature.AddReturnTypes("*"+op.responseType.EmitReference(ctx), "*http.Response", "error")
+			if op.responseFormat == "json" {
+				operationFuncStmts = append(operationFuncStmts,
+					generator.NewRawStatement("decoder := json.NewDecoder(httpRes.Body)"),
+					generator.NewRawStatementf("var response %s", op.responseType.EmitReference(ctx)),
+					generator.NewIf("err := decoder.Decode(&response); err != nil", errorReturnWithResponse),
+					generator.NewReturnStatement("&response", "httpRes", "nil"),
+				)
+			} else {
+				operationFuncStmts = append(operationFuncStmts,
+					generator.NewReturnStatement("nil /* TODO */", "httpRes", "nil"),
+				)
+			}
+		} else {
+			operationFuncStmts = append(operationFuncStmts,
+				generator.NewReturnStatement("httpRes", "nil"),
+			)
+			funcSignature = funcSignature.AddReturnTypes("*http.Response", "error")
+		}
+
+		operationFunc := generator.NewFunc(
+			clientStructReceiver,
+			funcSignature,
+			operationFuncStmts...,
+		)
+
+		clientInterface = clientInterface.AddSignatures(funcSignature)
+
+		if summ := op.Operation.Summary; summ != "" {
+			funcStmts = append(funcStmts, generator.NewComment(summ))
+		}
+
+		if desc := op.Operation.Description; desc != "" {
+			funcStmts = append(funcStmts, generator.NewComment(""), generatorx.NewMultilineComment(desc))
+		}
+
+		funcStmts = append(
+			funcStmts,
+			operationFunc,
+			generator.NewNewline(),
+		)
 	}
 
-	return []generator.Statement{iface}
+	stmts := []generator.Statement{clientInterface, clientStruct}
+	stmts = append(stmts, funcStmts...)
+
+	return stmts
 }
 
 func (c *Client) EmitReference(ctx *GeneratorContext) string {
