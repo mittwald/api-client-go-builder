@@ -1,11 +1,12 @@
 package generator
 
 import (
+	"fmt"
 	"github.com/mittwald/api-client-go-builder/pkg/generatorx"
 	"github.com/moznion/gowrtr/generator"
 )
 
-var _ Type = &StringUUIDType{}
+var _ SchemaType = &StringUUIDType{}
 
 type StringUUIDType struct {
 	BaseType
@@ -40,4 +41,8 @@ func (o *StringUUIDType) BuildExample(*GeneratorContext, int, int) any {
 	}
 
 	return "7a9d8971-09b0-4c39-8c64-546b6e1875ce"
+}
+
+func (o *StringUUIDType) EmitToString(ref string, _ *GeneratorContext) string {
+	return fmt.Sprintf("%s.String()", ref)
 }

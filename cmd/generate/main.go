@@ -14,7 +14,7 @@ func main() {
 		Usage: "generate mittwald mStudio v2 API client",
 		Action: func(ctx *cli.Context) error {
 			log.SetLevel(log.DebugLevel)
-			
+
 			gen := generator.Generator{
 				SpecLoader: generator.NewURLSpecLoader(nil),
 				SchemaGenerator: generator.SchemaGenerator{
@@ -23,8 +23,9 @@ func main() {
 			}
 
 			genOpts := generator.GeneratorOpts{
-				SpecSource: ctx.Args().Get(0),
-				Target:     ctx.Args().Get(1),
+				SpecSource:      ctx.Args().Get(0),
+				Target:          ctx.Args().Get(1),
+				BasePackageName: ctx.Args().Get(2),
 			}
 
 			fmt.Println(genOpts)

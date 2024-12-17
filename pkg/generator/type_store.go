@@ -13,21 +13,27 @@ import (
 type TypeStore struct {
 	ComponentSchemas map[string]Type
 	SubTypes         map[string]Type
+	Clients          map[string]Type
 }
 
 func NewTypeStore() *TypeStore {
 	return &TypeStore{
 		ComponentSchemas: make(map[string]Type),
 		SubTypes:         make(map[string]Type),
+		Clients:          make(map[string]Type),
 	}
 }
 
-func (s *TypeStore) LookupReference(ref string) (Type, error) {
+func (s *TypeStore) LookupReference(ref string) (SchemaType, error) {
 	if strings.HasPrefix(ref, "#/components/schemas") {
 		name := strings.Replace(ref, "#/components/schemas/", "", 1)
 		typ, ok := s.ComponentSchemas[name]
-		if ok {
-			return typ, nil
+		if !ok {
+			return nil, fmt.Errorf("reference '%s' could not be resolved; no type with this name", ref)
+		}
+
+		if schemaType, ok := typ.(SchemaType); ok {
+			return schemaType, nil
 		}
 	}
 
@@ -38,12 +44,16 @@ func (s *TypeStore) AddComponentSchema(name string, typ Type) {
 	s.ComponentSchemas[name] = typ
 }
 
+func (s *TypeStore) AddClient(typ Type) {
+	s.Clients[typ.Name().PackagePath] = typ
+}
+
 func (s *TypeStore) AddSubtype(name SchemaName, typ Type) {
 	s.SubTypes[name.PackageKey+"."+name.StructName] = typ
 }
 
 func (s *TypeStore) Len() int {
-	return len(s.ComponentSchemas) + len(s.SubTypes)
+	return len(s.ComponentSchemas) + len(s.SubTypes) + len(s.Clients)
 }
 
 func (s *TypeStore) BuildSubtypes() error {
@@ -52,7 +62,12 @@ func (s *TypeStore) BuildSubtypes() error {
 	visited := make(map[string]struct{})
 
 	buildSubtype := func(name string, typ Type) error {
+		if _, alreadySeen := visited[name]; alreadySeen {
+			return nil
+		}
+
 		visited[name] = struct{}{}
+		log.Debug("building subtypes for", "name", name)
 		if st, ok := typ.(TypeWithSubtypes); ok {
 			if err := st.BuildSubtypes(s); err != nil {
 				return fmt.Errorf("error building subtypes for %s: %w", name, err)
@@ -61,7 +76,9 @@ func (s *TypeStore) BuildSubtypes() error {
 		return nil
 	}
 
-	for len(visited) < s.Len() {
+	processed := 0
+
+	for processed < s.Len() {
 		for name, typ := range s.ComponentSchemas {
 			if err := buildSubtype(name, typ); err != nil {
 				return err
@@ -72,6 +89,13 @@ func (s *TypeStore) BuildSubtypes() error {
 				return err
 			}
 		}
+		for name, typ := range s.Clients {
+			if err := buildSubtype(name, typ); err != nil {
+				return err
+			}
+		}
+
+		processed = len(visited)
 	}
 
 	return nil
@@ -97,16 +121,18 @@ func (s *TypeStore) EmitDeclarations(targetPath string) error {
 		root := names.BuildRoot()
 
 		if ctxForType.WithDebuggingComments {
-			schemaJson, _ := typ.Schema().Render()
-			root = root.AddStatements(
-				generator.NewComment("This data type was generated from the following JSON schema:"),
-				generatorx.NewMultilineComment(strings.TrimRight(string(schemaJson), "\n")),
-				generator.NewNewline(),
-			)
+			if schemaType, ok := typ.(SchemaType); ok {
+				schemaJson, _ := schemaType.Schema().Render()
+				root = root.AddStatements(
+					generator.NewComment("This data type was generated from the following JSON schema:"),
+					generatorx.NewMultilineComment(strings.TrimRight(string(schemaJson), "\n")),
+					generator.NewNewline(),
+				)
+			}
 		}
 
 		root = root.AddStatements(stmts...)
-		root = root.Gofmt("-s")
+		//root = root.Gofmt("-s")
 
 		if err := EmitToFile(targetPath, names.PackagePath, root); err != nil {
 			return err
@@ -138,9 +164,17 @@ func (s *TypeStore) EmitDeclarations(targetPath string) error {
 		}
 	}
 
+	for _, typ := range s.Clients {
+		if err := buildType(typ); err != nil {
+			return err
+		}
+	}
+
 	for _, typ := range s.SubTypes {
-		if typ.IsLightweight() {
-			continue
+		if st, ok := typ.(SchemaType); ok {
+			if st.IsLightweight() {
+				continue
+			}
 		}
 
 		if err := buildType(typ); err != nil {

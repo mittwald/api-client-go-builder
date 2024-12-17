@@ -5,7 +5,7 @@ import (
 	"github.com/moznion/gowrtr/generator"
 )
 
-var _ Type = &UnknownType{}
+var _ SchemaType = &UnknownType{}
 
 type UnknownType struct {
 	BaseType

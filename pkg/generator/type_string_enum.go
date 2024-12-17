@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-var _ Type = &StringEnumType{}
+var _ SchemaType = &StringEnumType{}
 
 type StringEnumType struct {
 	BaseType
@@ -81,4 +81,8 @@ func (o *StringEnumType) EmitValidation(ref string, _ *GeneratorContext) string 
 
 func (o *StringEnumType) BuildExample(*GeneratorContext, int, int) any {
 	return o.Cases[0]
+}
+
+func (o *StringEnumType) EmitToString(ref string, _ *GeneratorContext) string {
+	return fmt.Sprintf("string(%s)", ref)
 }

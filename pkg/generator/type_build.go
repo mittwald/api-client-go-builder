@@ -5,7 +5,7 @@ import (
 	"github.com/pb33f/libopenapi/datamodel/high/base"
 )
 
-func BuildTypeFromSchema(names SchemaName, schema *base.SchemaProxy, knownTypes *TypeStore) (Type, error) {
+func BuildTypeFromSchema(names SchemaName, schema *base.SchemaProxy, knownTypes *TypeStore) (SchemaType, error) {
 	baseType := BaseType{Names: names, schema: schema}
 	format := schema.Schema().Format
 
@@ -14,7 +14,7 @@ func BuildTypeFromSchema(names SchemaName, schema *base.SchemaProxy, knownTypes 
 	}
 
 	if len(schema.Schema().OneOf) > 0 {
-		alternativeTypes := make([]Type, len(schema.Schema().OneOf))
+		alternativeTypes := make([]SchemaType, len(schema.Schema().OneOf))
 		for i, altSchema := range schema.Schema().OneOf {
 			altType, err := BuildTypeFromSchema(names.ForSubtype(fmt.Sprintf("alternative%d", i+1)), altSchema, knownTypes)
 			if err != nil {
@@ -36,7 +36,7 @@ func BuildTypeFromSchema(names SchemaName, schema *base.SchemaProxy, knownTypes 
 	case "object":
 		additionalProperties := schema.Schema().AdditionalProperties
 		if additionalProperties != nil && (additionalProperties.IsA() || (additionalProperties.IsB() && additionalProperties.B)) {
-			var itemType Type = &UnknownType{baseType}
+			var itemType SchemaType = &UnknownType{baseType}
 			var err error
 
 			if additionalProperties.IsA() {

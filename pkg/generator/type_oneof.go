@@ -6,11 +6,11 @@ import (
 	"github.com/moznion/gowrtr/generator"
 )
 
-var _ Type = &OneOfType{}
+var _ SchemaType = &OneOfType{}
 
 type OneOfType struct {
 	BaseType
-	AlternativeTypes []Type
+	AlternativeTypes []SchemaType
 }
 
 func (o *OneOfType) BuildSubtypes(store *TypeStore) error {

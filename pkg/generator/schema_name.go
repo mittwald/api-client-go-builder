@@ -16,7 +16,7 @@ type SchemaName struct {
 
 func (n *SchemaName) ForSubtype(subtype string) SchemaName {
 	n2 := *n
-	n2.StructName += util.UpperFirst(subtype)
+	n2.StructName += util.ConvertToTypename(subtype)
 	n2.PackagePath = strings.Replace(n2.PackagePath, ".go", "_"+strings.ToLower(subtype)+".go", 1)
 	n2.ForceNamedType = false
 

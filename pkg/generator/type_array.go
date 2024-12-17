@@ -6,11 +6,11 @@ import (
 	"strings"
 )
 
-var _ Type = &ArrayType{}
+var _ SchemaType = &ArrayType{}
 
 type ArrayType struct {
 	BaseType
-	ItemType Type
+	ItemType SchemaType
 }
 
 func (o *ArrayType) BuildSubtypes(store *TypeStore) error {

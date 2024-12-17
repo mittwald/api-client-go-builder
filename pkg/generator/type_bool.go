@@ -1,10 +1,11 @@
 package generator
 
 import (
+	"fmt"
 	"github.com/moznion/gowrtr/generator"
 )
 
-var _ Type = &BoolType{}
+var _ SchemaType = &BoolType{}
 
 type BoolType struct {
 	BaseType
@@ -33,4 +34,8 @@ func (o *BoolType) BuildExample(*GeneratorContext, int, int) any {
 	}
 
 	return true
+}
+
+func (o *BoolType) EmitToString(ref string, _ *GeneratorContext) string {
+	return fmt.Sprintf("strconv.FormatBool(%s)", ref)
 }

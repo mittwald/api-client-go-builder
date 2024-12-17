@@ -7,11 +7,15 @@ import (
 
 type Type interface {
 	Name() SchemaName
-	Schema() *base.SchemaProxy
-	IsLightweight() bool
 	EmitDeclaration(ctx *GeneratorContext) []generator.Statement
 	EmitReference(ctx *GeneratorContext) string
+}
+
+type SchemaType interface {
+	Type
 	BuildExample(ctx *GeneratorContext, level, maxLevel int) any
+	Schema() *base.SchemaProxy
+	IsLightweight() bool
 }
 
 type TypeWithTestcases interface {

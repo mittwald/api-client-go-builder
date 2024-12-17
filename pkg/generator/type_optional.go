@@ -6,10 +6,10 @@ import (
 	"github.com/pb33f/libopenapi/datamodel/high/base"
 )
 
-var _ Type = &OptionalType{}
+var _ SchemaType = &OptionalType{}
 
 type OptionalType struct {
-	InnerType Type
+	InnerType SchemaType
 }
 
 func (o *OptionalType) Name() SchemaName {
@@ -66,4 +66,13 @@ func (o *OptionalType) BuildExample(ctx *GeneratorContext, level, maxLevel int) 
 	}
 
 	return o.InnerType.BuildExample(ctx, level+1, maxLevel)
+}
+
+func (o *OptionalType) EmitToString(ref string, ctx *GeneratorContext) string {
+	if ts, ok := o.InnerType.(TypeWithStringConversion); ok {
+		return ts.EmitToString("*"+ref, ctx)
+	}
+
+	// if they want compile errors, give them compile errors!
+	return "invalid-no-string-conversion"
 }

@@ -5,11 +5,11 @@ import (
 	"strings"
 )
 
-var _ Type = &MapType{}
+var _ SchemaType = &MapType{}
 
 type MapType struct {
 	BaseType
-	ItemType Type
+	ItemType SchemaType
 }
 
 func (o *MapType) BuildSubtypes(store *TypeStore) error {

@@ -1,10 +1,11 @@
 package generator
 
 import (
+	"fmt"
 	"github.com/moznion/gowrtr/generator"
 )
 
-var _ Type = &IntType{}
+var _ SchemaType = &IntType{}
 
 type IntType struct {
 	BaseType
@@ -34,4 +35,8 @@ func (o *IntType) BuildExample(*GeneratorContext, int, int) any {
 	}
 
 	return 42
+}
+
+func (o *IntType) EmitToString(ref string, _ *GeneratorContext) string {
+	return fmt.Sprintf("fmt.Sprintf(\"%%d\", %s)", ref)
 }

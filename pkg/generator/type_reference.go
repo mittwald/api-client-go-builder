@@ -5,12 +5,12 @@ import (
 	"github.com/moznion/gowrtr/generator"
 )
 
-var _ Type = &ReferenceType{}
+var _ SchemaType = &ReferenceType{}
 
 type ReferenceType struct {
 	BaseType
 	Target     string
-	TargetType Type
+	TargetType SchemaType
 }
 
 func (o *ReferenceType) IsLightweight() bool {
@@ -28,7 +28,7 @@ func (o *ReferenceType) BuildSubtypes(store *TypeStore) error {
 	return nil
 }
 
-func (o *ReferenceType) lookupReferenceOnce(ctx *GeneratorContext) Type {
+func (o *ReferenceType) lookupReferenceOnce(ctx *GeneratorContext) SchemaType {
 	if o.TargetType != nil {
 		return o.TargetType
 	}

@@ -11,8 +11,9 @@ type Generator struct {
 }
 
 type GeneratorOpts struct {
-	SpecSource string
-	Target     string
+	SpecSource      string
+	Target          string
+	BasePackageName string
 }
 
 func (g *Generator) Build(opts GeneratorOpts) error {
@@ -33,6 +34,10 @@ func (g *Generator) Build(opts GeneratorOpts) error {
 		log.Debug("observed type", "name", schemaName)
 
 		store.AddComponentSchema(schemaName, typ)
+	}
+
+	if err := g.generateClients(opts, doc, store); err != nil {
+		return fmt.Errorf("error building clients: %w", err)
 	}
 
 	if err := store.BuildSubtypes(); err != nil {

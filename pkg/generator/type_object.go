@@ -7,13 +7,15 @@ import (
 	"github.com/pb33f/libopenapi/orderedmap"
 )
 
-var _ Type = &ObjectType{}
+var _ SchemaType = &ObjectType{}
 
 type ObjectType struct {
 	BaseType
 
-	PropertyTypes      *orderedmap.Map[string, Type]
+	PropertyTypes      *orderedmap.Map[string, SchemaType]
 	RequiredProperties map[string]struct{}
+
+	subtypesBuilt bool
 }
 
 func (o *ObjectType) IsLightweight() bool {
@@ -23,7 +25,9 @@ func (o *ObjectType) IsLightweight() bool {
 func (o *ObjectType) BuildSubtypes(store *TypeStore) error {
 	s := o.schema.Schema()
 
-	o.PropertyTypes = orderedmap.New[string, Type]()
+	o.subtypesBuilt = true
+
+	o.PropertyTypes = orderedmap.New[string, SchemaType]()
 	o.RequiredProperties = make(map[string]struct{})
 	for _, req := range s.Required {
 		o.RequiredProperties[req] = struct{}{}
@@ -49,6 +53,10 @@ func (o *ObjectType) BuildSubtypes(store *TypeStore) error {
 
 func (o *ObjectType) EmitDeclaration(ctx *GeneratorContext) []generator.Statement {
 	s := o.schema.Schema()
+
+	if !o.subtypesBuilt {
+		panic(fmt.Sprintf("type %s emitted without subtypes", o.Names.PackagePath))
+	}
 
 	structDecl := generator.NewStruct(o.Names.StructName)
 	for propName, propType := range o.PropertyTypes.FromOldest() {

@@ -6,7 +6,7 @@ import (
 	"github.com/moznion/gowrtr/generator"
 )
 
-var _ Type = &StringType{}
+var _ SchemaType = &StringType{}
 
 type StringType struct {
 	BaseType
@@ -47,4 +47,8 @@ func (o *StringType) BuildExample(*GeneratorContext, int, int) any {
 	}
 
 	return "string"
+}
+
+func (o *StringType) EmitToString(ref string, _ *GeneratorContext) string {
+	return ref
 }
