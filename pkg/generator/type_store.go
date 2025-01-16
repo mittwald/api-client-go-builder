@@ -5,7 +5,6 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/mittwald/api-client-go-builder/pkg/generatorx"
 	"github.com/moznion/gowrtr/generator"
-	"os/exec"
 	"path"
 	"strings"
 )
@@ -158,7 +157,7 @@ func (s *TypeStore) EmitDeclarations(targetPath string) error {
 			testRoot = testRoot.AddStatements(generator.NewRawStatement("import . \"github.com/onsi/ginkgo/v2\""))
 			testRoot = testRoot.AddStatements(generator.NewRawStatement("import . \"github.com/onsi/gomega\""))
 			testRoot = testRoot.AddStatements(testStmts...)
-			testRoot = testRoot.Gofmt("-s")
+			//testRoot = testRoot.Gofmt("-s")
 
 			if err := EmitToFile(targetPath, testNames.PackagePath, testRoot); err != nil {
 				return err
@@ -189,6 +188,7 @@ func (s *TypeStore) EmitDeclarations(targetPath string) error {
 	for _, typ := range s.SubTypes {
 		if st, ok := typ.(SchemaType); ok {
 			if st.IsLightweight() {
+				log.Infof("skipping lightweight type %s (type %T)", st.Name().StructName, typ)
 				continue
 			}
 		}
@@ -216,11 +216,16 @@ func (s *TypeStore) EmitDeclarations(targetPath string) error {
 		}
 	}
 
-	log.Info("running goimports")
-	cmd := exec.Command("goimports", "-w", targetPath)
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("error running goimports: %w", err)
-	}
+	/*
+		log.Info("running goimports")
+		//cmd := exec.Command("goimports", "-w", targetPath)
+		cmd := exec.Command("goimports", "-w", ".")
+		cmd.Dir = targetPath
+		if err := cmd.Run(); err != nil {
+			return fmt.Errorf("error running goimports: %w", err)
+		}
+
+	*/
 
 	return nil
 }

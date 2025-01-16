@@ -67,14 +67,39 @@ func (c *ClientSet) BuildSubtypes(store *TypeStore) error {
 	return nil
 }
 
+func (c *ClientSet) ImplName() string {
+	return util.LowerFirst(fmt.Sprintf("%sImpl", c.name.StructName))
+}
+
 func (c *ClientSet) EmitDeclaration(ctx *GeneratorContext) []generator.Statement {
 	iface := generator.NewInterface(c.name.StructName)
+	str := generator.NewStruct(c.ImplName()).AddField("client", "httpclient.RequestRunner")
+	strReceiver := generator.NewFuncReceiver("c", "*"+c.ImplName())
 
-	for clientName, client := range c.clients.FromOldest() {
-		iface = iface.AddSignatures(generator.NewFuncSignature(clientName).AddReturnTypes(client.EmitReference(ctx)))
+	funcs := []generator.Statement{
+		generator.NewFunc(
+			nil,
+			generator.NewFuncSignature("NewClient").
+				Parameters(generator.NewFuncParameter("client", "httpclient.RequestRunner")).
+				ReturnTypes(c.EmitReference(ctx)),
+			generator.NewReturnStatement(fmt.Sprintf("&%s{client: client}", c.ImplName())),
+		),
+		generator.NewNewline(),
 	}
 
-	return []generator.Statement{iface}
+	for clientName, client := range c.clients.FromOldest() {
+		signature := generator.NewFuncSignature(clientName).AddReturnTypes(client.EmitReference(ctx))
+
+		iface = iface.AddSignatures(signature)
+		clientFunc := generator.NewFunc(strReceiver, signature, generator.NewReturnStatement(client.Name().PackageKey+".NewClient(c.client)"))
+
+		funcs = append(funcs, clientFunc, generator.NewNewline())
+	}
+
+	stmts := []generator.Statement{iface, str}
+	stmts = append(stmts, funcs...)
+
+	return stmts
 }
 
 func (c *ClientSet) EmitReference(ctx *GeneratorContext) string {

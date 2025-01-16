@@ -21,8 +21,8 @@ func (o *OptionalType) Schema() *base.SchemaProxy {
 }
 
 func (o *OptionalType) IsLightweight() bool {
-	//return o.InnerType.IsLightweight()
-	return true
+	return o.InnerType.IsLightweight()
+	//return true
 }
 
 func (o *OptionalType) BuildSubtypes(store *TypeStore) error {

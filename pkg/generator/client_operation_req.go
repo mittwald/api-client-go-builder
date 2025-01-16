@@ -116,7 +116,7 @@ func (c *ClientOperationRequest) buildBodyFunction() generator.Statement {
 		)
 	}
 
-	return generator.NewFunc(receiver, signature, generator.NewReturnStatement("nil"))
+	return generator.NewFunc(receiver, signature, generator.NewReturnStatement("nil", "nil"))
 }
 
 func (c *ClientOperationRequest) buildQueryFunction(ctx *GeneratorContext) generator.Statement {

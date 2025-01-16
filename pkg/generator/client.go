@@ -85,9 +85,17 @@ func (c *Client) EmitDeclaration(ctx *GeneratorContext) []generator.Statement {
 	clientInterface := generator.NewInterface(c.name.StructName)
 	clientStructName := c.ImplName()
 	clientStruct := generator.NewStruct(clientStructName).
-		AddField("Client", "*http.Client")
+		AddField("client", "httpclient.RequestRunner")
 
-	funcStmts := []generator.Statement{}
+	funcStmts := []generator.Statement{
+		generator.NewFunc(
+			nil,
+			generator.NewFuncSignature("NewClient").
+				Parameters(generator.NewFuncParameter("client", "httpclient.RequestRunner")).
+				ReturnTypes(c.EmitReference(ctx)),
+			generator.NewReturnStatement(fmt.Sprintf("&%s{client: client}", clientStructName)),
+		),
+	}
 
 	clientStructReceiver := generator.NewFuncReceiver("c", "*"+clientStructName)
 
@@ -119,7 +127,7 @@ func (c *Client) EmitDeclaration(ctx *GeneratorContext) []generator.Statement {
 			generator.NewRawStatement("httpReq, err := http.NewRequestWithContext(ctx, req.method(), req.url(), body)"),
 			generator.NewIf("err != nil", errorReturn),
 			generator.NewNewline(),
-			generator.NewRawStatement("httpRes, err := c.Client.Do(httpReq)"),
+			generator.NewRawStatement("httpRes, err := c.client.Do(httpReq)"),
 			generator.NewIf("err != nil", errorReturnWithResponse),
 			generator.NewNewline(),
 		}
@@ -180,4 +188,12 @@ func (c *Client) EmitReference(ctx *GeneratorContext) string {
 	}
 
 	return fmt.Sprintf("%s.%s", c.name.PackageKey, c.name.StructName)
+}
+
+func (c *Client) EmitImplReference(ctx *GeneratorContext) string {
+	if c.name.PackageKey == ctx.CurrentPackage {
+		return c.ImplName()
+	}
+
+	return fmt.Sprintf("%s.%s", c.name.PackageKey, c.ImplName())
 }
