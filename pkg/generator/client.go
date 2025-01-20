@@ -7,6 +7,7 @@ import (
 	"github.com/mittwald/api-client-go-builder/pkg/util"
 	"github.com/moznion/gowrtr/generator"
 	v3 "github.com/pb33f/libopenapi/datamodel/high/v3"
+	"net/http"
 	"path"
 	"strconv"
 	"strings"
@@ -20,6 +21,12 @@ type OperationWithMeta struct {
 	requestType    Type
 	responseType   Type
 	responseFormat string
+}
+
+type statusResponseSchemaTuple struct {
+	status   int64
+	response *v3.Response
+	schema   *v3.MediaType
 }
 
 type Client struct {
@@ -44,11 +51,7 @@ func (c *Client) BuildSubtypes(store *TypeStore) error {
 		requestName.StructName = operationName + "Request"
 		requestName.PackagePath = path.Join(path.Dir(requestName.PackagePath), strings.ToLower(operationName)+"_request.go")
 
-		responseName := c.name
-		responseName.StructName = operationName + "Response"
-		responseName.PackagePath = path.Join(path.Dir(requestName.PackagePath), strings.ToLower(operationName)+"_response.go")
-
-		c.operations[i].requestType = &ClientOperationRequest{name: requestName, operation: &c.operations[i]}
+		responses := make(map[int64]statusResponseSchemaTuple)
 
 		for code, response := range c.operations[i].Operation.Responses.Codes.FromOldest() {
 			codeAsInt, err := strconv.ParseInt(code, 10, strconv.IntSize)
@@ -58,17 +61,67 @@ func (c *Client) BuildSubtypes(store *TypeStore) error {
 
 			if codeAsInt >= 200 && codeAsInt < 400 && response.Content != nil {
 				if schema, ok := response.Content.Get("application/json"); ok {
-					responseType, err := BuildTypeFromSchema(responseName, schema.Schema, store)
-					if err != nil {
-						return fmt.Errorf("error building response type for operation %s: %w", op.Operation.OperationId, err)
+					responses[codeAsInt] = statusResponseSchemaTuple{
+						status:   codeAsInt,
+						response: response,
+						schema:   schema,
 					}
-
-					c.operations[i].responseType = responseType
-					c.operations[i].responseFormat = "json"
-
-					store.AddClient(responseType)
 				}
 			}
+		}
+
+		c.operations[i].requestType = &ClientOperationRequest{name: requestName, operation: &c.operations[i]}
+
+		if len(responses) == 1 {
+			responseName := c.name
+			responseName.StructName = operationName + "Response"
+			responseName.PackagePath = path.Join(path.Dir(requestName.PackagePath), strings.ToLower(operationName)+"_response.go")
+
+			for _, r := range responses {
+				responseType, err := BuildTypeFromSchema(responseName, r.schema.Schema, store)
+				if err != nil {
+					return fmt.Errorf("error building response type for operation %s: %w", op.Operation.OperationId, err)
+				}
+
+				c.operations[i].responseType = responseType
+				c.operations[i].responseFormat = "json"
+
+				store.AddClient(responseType)
+				break
+			}
+		} else {
+			statusSubtypes := make([]SchemaType, 0)
+
+			for _, r := range responses {
+				statusName := util.ConvertToTypename(http.StatusText(int(r.status)))
+
+				responseName := c.name
+				responseName.StructName = operationName + statusName + "Response"
+				responseName.PackagePath = path.Join(path.Dir(requestName.PackagePath), strings.ToLower(operationName+"_"+statusName)+"_response.go")
+
+				responseType, err := BuildTypeFromSchema(responseName, r.schema.Schema, store)
+				if err != nil {
+					return fmt.Errorf("error building response type for operation %s: %w", op.Operation.OperationId, err)
+				}
+
+				statusSubtypes = append(statusSubtypes, responseType)
+			}
+
+			responseName := c.name
+			responseName.StructName = operationName + "Response"
+			responseName.PackagePath = path.Join(path.Dir(requestName.PackagePath), strings.ToLower(operationName)+"_response.go")
+
+			responseType := &OneOfType{
+				BaseType: BaseType{
+					Names: responseName,
+				},
+				AlternativeTypes: statusSubtypes,
+			}
+
+			c.operations[i].responseType = responseType
+			c.operations[i].responseFormat = "json"
+
+			store.AddClient(responseType)
 		}
 
 		store.AddClient(c.operations[i].requestType)
