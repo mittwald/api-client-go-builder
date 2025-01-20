@@ -7,6 +7,9 @@ import (
 
 var _ SchemaType = &UnknownType{}
 
+// UnknownType is a placeholder for any type that could not be automatically
+// generated from a JSON schema. It is used as fallback type in various places,
+// but should ideally never be used.
 type UnknownType struct {
 	BaseType
 }

@@ -77,3 +77,7 @@ func (o *OptionalType) EmitToString(ref string, ctx *GeneratorContext) string {
 	// if they want compile errors, give them compile errors!
 	return "invalid-no-string-conversion"
 }
+
+func (o *OptionalType) Unpack() SchemaType {
+	return o.InnerType
+}

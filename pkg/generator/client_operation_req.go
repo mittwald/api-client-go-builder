@@ -145,8 +145,24 @@ func (c *ClientOperationRequest) buildQueryFunction(ctx *GeneratorContext) gener
 
 	for name, param := range c.queryParams.FromOldest() {
 		fieldName := util.ConvertToTypename(name)
-		if ts, ok := param.(TypeWithStringConversion); ok {
-			var stmt generator.Statement = generator.NewRawStatementf("q.Set(%#v, %s)", name, ts.EmitToString("r."+fieldName, ctx))
+
+		unpacked := param
+		if unpackable, ok := param.(UnpackableType); ok {
+			unpacked = unpackable.Unpack()
+		}
+
+		// NOTE: Some of the type assertions below are asserted against
+		// "unpacked", and some against "param". This is done on purpose.
+
+		if paramArray, isArray := unpacked.(*ArrayType); isArray {
+			if paramArrayItemString, isStringConvertible := paramArray.ItemType.(TypeWithStringConversion); isStringConvertible {
+				stmt := generator.NewFor("_, val := range r."+fieldName,
+					generator.NewRawStatementf("q.Add(%#v, %s)", name, paramArrayItemString.EmitToString("val", ctx)),
+				)
+				stmts = append(stmts, stmt)
+			}
+		} else if t, ok := param.(TypeWithStringConversion); ok {
+			var stmt generator.Statement = generator.NewRawStatementf("q.Set(%#v, %s)", name, t.EmitToString("r."+fieldName, ctx))
 			if _, isOptional := param.(*OptionalType); isOptional {
 				stmt = generator.NewIf(fmt.Sprintf("r.%s != nil", fieldName), stmt)
 			}

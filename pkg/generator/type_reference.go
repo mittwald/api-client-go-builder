@@ -65,3 +65,16 @@ func (o *ReferenceType) BuildExample(ctx *GeneratorContext, level, maxLevel int)
 	target := o.lookupReferenceOnce(ctx)
 	return target.BuildExample(ctx, level+1, maxLevel)
 }
+
+func (o *ReferenceType) Unpack() SchemaType {
+	return o.TargetType
+}
+
+func (o *ReferenceType) EmitToString(ref string, ctx *GeneratorContext) string {
+	if ts, ok := o.TargetType.(TypeWithStringConversion); ok {
+		return ts.EmitToString(ref, ctx)
+	}
+
+	// if they want compile errors, give them compile errors!
+	return "invalid-no-string-conversion"
+}
