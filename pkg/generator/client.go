@@ -13,6 +13,19 @@ import (
 	"strings"
 )
 
+var commonPrefixes = [...]string{
+	"extension",
+	"contributor",
+	"order",
+	"dns",
+	"ingress",
+	"ssl",
+	"deliverybox",
+	"notifications",
+	"ssh-user",
+	"sftp-user",
+}
+
 type OperationWithMeta struct {
 	Path      string
 	Method    string
@@ -52,7 +65,12 @@ func (c *Client) BuildSubtypes(store *TypeStore) error {
 		operationId := op.Operation.OperationId
 		operationId = strings.TrimPrefix(operationId, "deprecated-")
 		for _, tag := range op.Operation.Tags {
-			operationId = strings.TrimPrefix(operationId, strings.ToLower(tag)+"-")
+			expectedPrefix := strings.ToLower(util.ConvertToTypename(tag)) + "-"
+			operationId = strings.TrimPrefix(operationId, expectedPrefix)
+		}
+		for _, prefix := range commonPrefixes {
+			expectedPrefix := prefix + "-"
+			operationId = strings.TrimPrefix(operationId, expectedPrefix)
 		}
 
 		operationName := util.ConvertToTypename(operationId)
