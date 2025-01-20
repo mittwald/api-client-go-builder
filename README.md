@@ -18,7 +18,7 @@ $ gh workflow run generate.yml
 Install this builder, or invoke it directly from source:
 
 ```
-$ go install github.com/mittwald/api-client-go-builder/cmd/mittwald-go-client-builder
+$ go install github.com/mittwald/api-client-go-builder/cmd/mittwald-go-client-builder@latest
 
 $ # alternatively:
 $ git clone https://github.com/mittwald/api-client-go-builder
