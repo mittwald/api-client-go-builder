@@ -118,7 +118,7 @@ func (c *Client) BuildSubtypes(store *TypeStore) error {
 				store.AddClient(responseType)
 				break
 			}
-		} else {
+		} else if len(responses) > 1 {
 			statusSubtypes := make([]SchemaType, 0)
 
 			for _, r := range responses {
