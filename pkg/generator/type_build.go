@@ -65,10 +65,14 @@ func BuildTypeFromSchema(names SchemaName, schema *base.SchemaProxy, knownTypes 
 		if schema.Schema().Enum != nil {
 			return NewStringEnumTypeFromYamlNodes(baseType, schema.Schema().Enum), nil
 		}
-		if format == "uuid" {
+		switch format {
+		case "uuid":
 			return &StringUUIDType{BaseType: baseType}, nil
+		case "date-time":
+			return &DateType{BaseType: baseType}, nil
+		default:
+			return &StringType{BaseType: baseType}, nil
 		}
-		return &StringType{BaseType: baseType}, nil
 	case "bool", "boolean":
 		return &BoolType{BaseType: baseType}, nil
 	case "integer":
