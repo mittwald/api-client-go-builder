@@ -221,9 +221,8 @@ func (c *Client) EmitDeclaration(ctx *GeneratorContext) []generator.Statement {
 			funcSignature = funcSignature.AddReturnTypes("*"+op.responseType.EmitReference(ctx), "*http.Response", "error")
 			if op.responseFormat == "json" {
 				operationFuncStmts = append(operationFuncStmts,
-					generator.NewRawStatement("decoder := json.NewDecoder(httpRes.Body)"),
 					generator.NewRawStatementf("var response %s", op.responseType.EmitReference(ctx)),
-					generator.NewIf("err := decoder.Decode(&response); err != nil", errorReturnWithResponse),
+					generator.NewIf("err := json.NewDecoder(httpRes.Body).Decode(&response); err != nil", errorReturnWithResponse),
 					generator.NewReturnStatement("&response", "httpRes", "nil"),
 				)
 			} else {
