@@ -201,13 +201,10 @@ func (c *Client) EmitDeclaration(ctx *GeneratorContext) []generator.Statement {
 		}
 
 		operationFuncStmts := []generator.Statement{
-			generator.NewRawStatement("body, err := req.body()"),
+			generator.NewRawStatement("httpReq, err := req.BuildRequest()"),
 			generator.NewIf("err != nil", errorReturn),
 			generator.NewNewline(),
-			generator.NewRawStatement("httpReq, err := http.NewRequestWithContext(ctx, req.method(), req.url(), body)"),
-			generator.NewIf("err != nil", errorReturn),
-			generator.NewNewline(),
-			generator.NewRawStatement("httpRes, err := c.client.Do(httpReq)"),
+			generator.NewRawStatement("httpRes, err := c.client.Do(httpReq.WithContext(ctx))"),
 			generator.NewIf("err != nil", errorReturnWithResponse),
 			generator.NewNewline(),
 			generator.NewIf("httpRes.StatusCode >= 400",

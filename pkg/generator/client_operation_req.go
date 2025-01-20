@@ -84,24 +84,35 @@ func (c *ClientOperationRequest) EmitDeclaration(ctx *GeneratorContext) []genera
 		str = str.AddField(fieldName, param.EmitReference(ctx))
 	}
 
-	receiver := generator.NewFuncReceiver("r", "*"+c.name.StructName)
-	methodFunc := generator.NewFunc(
-		receiver,
-		generator.NewFuncSignature("method").AddReturnTypes("string"),
-		generator.NewReturnStatement(fmt.Sprintf("http.Method%s", util.UpperFirst(c.operation.Method))),
-	)
-
+	reqFunc := c.buildNewRequestFunction()
 	bodyFunc := c.buildBodyFunction()
 	urlFunc := c.buildURLFunction(ctx)
 	queryFunc := c.buildQueryFunction(ctx)
 
 	return []generator.Statement{
 		str,
-		methodFunc, generator.NewNewline(),
+		reqFunc, generator.NewNewline(),
 		bodyFunc, generator.NewNewline(),
 		urlFunc, generator.NewNewline(),
 		queryFunc,
 	}
+}
+
+func (c *ClientOperationRequest) buildNewRequestFunction() generator.Statement {
+	receiver := generator.NewFuncReceiver("r", "*"+c.name.StructName)
+	signature := generator.NewFuncSignature("BuildRequest").AddReturnTypes("*http.Request", "error")
+
+	method := fmt.Sprintf("http.Method%s", util.UpperFirst(c.operation.Method))
+
+	errorReturn := generator.NewReturnStatement("nil", "err")
+	funcStmts := []generator.Statement{
+		generator.NewRawStatement("body, err := r.body()"),
+		generator.NewIf("err != nil", errorReturn),
+		generator.NewNewline(),
+		generator.NewReturnStatement(fmt.Sprintf("http.NewRequest(%s, r.url(), body)", method)),
+	}
+
+	return generator.NewFunc(receiver, signature, funcStmts...)
 }
 
 func (c *ClientOperationRequest) buildBodyFunction() generator.Statement {
