@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/mittwald/api-client-go-builder/pkg/generatorx"
 	"github.com/moznion/gowrtr/generator"
+	"strings"
 )
 
 var _ SchemaType = &StringUUIDType{}
@@ -44,5 +45,6 @@ func (o *StringUUIDType) BuildExample(*GeneratorContext, int, int) any {
 }
 
 func (o *StringUUIDType) EmitToString(ref string, _ *GeneratorContext) string {
+	ref = strings.TrimPrefix(ref, "*")
 	return fmt.Sprintf("%s.String()", ref)
 }
