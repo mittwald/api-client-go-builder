@@ -29,14 +29,6 @@ func (o *OneOfType) EmitTestCases(ctx *GeneratorContext) []generator.Statement {
 			generator.NewRawStatementf("Expect(sut.%s).NotTo(BeNil())", o.alternativeName(i)),
 		)
 
-		for j := range o.AlternativeTypes {
-			if j != i {
-				testFunc = testFunc.AddStatements(
-					generator.NewRawStatementf("Expect(sut.%s).To(BeNil())", o.alternativeName(j)),
-				)
-			}
-		}
-
 		unmarshalSuiteFunc = unmarshalSuiteFunc.AddStatements(generatorx.NewIt(testCaseName, testFunc))
 	}
 

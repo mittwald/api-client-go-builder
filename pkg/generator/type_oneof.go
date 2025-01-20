@@ -62,6 +62,11 @@ func (o *OneOfType) emitValidateFunc(ctx *GeneratorContext) generator.Statement 
 			validateStmts = append(validateStmts,
 				generator.NewIf(ref+" != nil", generator.NewReturnStatement(altValidation)),
 			)
+		} else {
+			validateStmts = append(validateStmts,
+				generator.NewCommentf(" The %s subtype does not implement validation, so we consider being non-nil as valid", o.alternativeName(i)),
+				generator.NewIf(ref+" != nil", generator.NewReturnStatement("nil")),
+			)
 		}
 	}
 
@@ -80,6 +85,7 @@ func (o *OneOfType) emitJSONUnmarshalFunc(ctx *GeneratorContext) generator.State
 
 	jsonUnmarshalStmts = append(jsonUnmarshalStmts,
 		generator.NewRawStatement("reader := bytes.NewReader(input)"),
+		generator.NewRawStatement("decodedAtLeastOnce := false"),
 		generator.NewRawStatement("dec := json.NewDecoder(reader)"),
 		generator.NewRawStatement("dec.DisallowUnknownFields()"),
 		generator.NewNewline(),
@@ -100,20 +106,20 @@ func (o *OneOfType) emitJSONUnmarshalFunc(ctx *GeneratorContext) generator.State
 					generator.NewCommentf("subtype: %T", alt),
 					generator.NewIf(fmt.Sprintf("vErr := %s; vErr == nil", validation),
 						generator.NewRawStatementf("a.%s = &%s", name, localName),
-						generator.NewReturnStatement("nil"),
+						generator.NewRawStatement("decodedAtLeastOnce = true"),
 					),
 				)
 			} else {
 				unmarshalCondition = unmarshalCondition.AddStatements(
 					generator.NewCommentf("subtype: %T", alt),
 					generator.NewRawStatementf("a.%s = &%s", name, localName),
-					generator.NewReturnStatement("nil"),
+					generator.NewRawStatement("decodedAtLeastOnce = true"),
 				)
 			}
 		} else {
 			unmarshalCondition = unmarshalCondition.AddStatements(
 				generator.NewRawStatementf("a.%s = &%s", name, localName),
-				generator.NewReturnStatement("nil"),
+				generator.NewRawStatement("decodedAtLeastOnce = true"),
 			)
 		}
 
@@ -126,7 +132,9 @@ func (o *OneOfType) emitJSONUnmarshalFunc(ctx *GeneratorContext) generator.State
 	}
 
 	jsonUnmarshalStmts = append(jsonUnmarshalStmts,
-		generator.NewReturnStatement("fmt.Errorf(\"could not unmarshal into any alternative for type %T\", a)"),
+		generator.NewIf("!decodedAtLeastOnce",
+			generator.NewReturnStatement("fmt.Errorf(\"could not unmarshal into any alternative for type %T\", a)")),
+		generator.NewReturnStatement("nil"),
 	)
 
 	return generator.NewFunc(
