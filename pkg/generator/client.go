@@ -17,6 +17,7 @@ type OperationWithMeta struct {
 	Path      string
 	Method    string
 	Operation *v3.Operation
+	Name      string
 
 	requestType    Type
 	responseType   Type
@@ -45,7 +46,16 @@ func (c *Client) BuildSubtypes(store *TypeStore) error {
 			continue
 		}
 
-		operationName := util.ConvertToTypename(op.Operation.OperationId)
+		// Remove both the tag prefix from operation IDs, and deprecation notices.
+		// NOTE: Removing the `deprecated-` prefix is kind of risky, because theoretically
+		// there might be both a `foo` and `deprecated-foo` operation.
+		operationId := op.Operation.OperationId
+		operationId = strings.TrimPrefix(operationId, "deprecated-")
+		for _, tag := range op.Operation.Tags {
+			operationId = strings.TrimPrefix(operationId, strings.ToLower(tag)+"-")
+		}
+
+		operationName := util.ConvertToTypename(operationId)
 
 		requestName := c.name
 		requestName.StructName = operationName + "Request"
@@ -70,6 +80,7 @@ func (c *Client) BuildSubtypes(store *TypeStore) error {
 			}
 		}
 
+		c.operations[i].Name = operationName
 		c.operations[i].requestType = &ClientOperationRequest{name: requestName, operation: &c.operations[i]}
 
 		if len(responses) == 1 {
@@ -158,9 +169,7 @@ func (c *Client) EmitDeclaration(ctx *GeneratorContext) []generator.Statement {
 			continue
 		}
 
-		operationName := util.ConvertToTypename(op.Operation.OperationId)
-
-		funcSignature := generator.NewFuncSignature(operationName).
+		funcSignature := generator.NewFuncSignature(op.Name).
 			AddParameters(
 				generator.NewFuncParameter("ctx", "context.Context"),
 				generator.NewFuncParameter("req", op.requestType.EmitReference(ctx)),
