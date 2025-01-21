@@ -63,7 +63,13 @@ func (c *Client) BuildSubtypes(store *TypeStore) error {
 		// NOTE: Removing the `deprecated-` prefix is kind of risky, because theoretically
 		// there might be both a `foo` and `deprecated-foo` operation.
 		operationId := op.Operation.OperationId
-		//operationId = strings.TrimPrefix(operationId, "deprecated-")
+		deprecated := false
+
+		if strings.HasPrefix(operationId, "deprecated-") {
+			deprecated = true
+			operationId = strings.TrimPrefix(operationId, "deprecated-")
+		}
+
 		for _, tag := range op.Operation.Tags {
 			expectedPrefix := strings.ToLower(util.ConvertToTypename(tag)) + "-"
 			operationId = strings.TrimPrefix(operationId, expectedPrefix)
@@ -71,6 +77,10 @@ func (c *Client) BuildSubtypes(store *TypeStore) error {
 		for _, prefix := range commonPrefixes {
 			expectedPrefix := prefix + "-"
 			operationId = strings.TrimPrefix(operationId, expectedPrefix)
+		}
+
+		if deprecated {
+			operationId = "deprecated-" + operationId
 		}
 
 		operationName := util.ConvertToTypename(operationId)
