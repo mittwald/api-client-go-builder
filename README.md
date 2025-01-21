@@ -5,14 +5,6 @@
 
 ## Using the generator toolkit
 
-### Automatic client generation
-
-This repository is configured to automatically build and publish the PHP client using the `generate` GitHub Action. This action is triggered by a daily schedule, but can also be triggered manually:
-
-```
-$ gh workflow run generate.yml
-```
-
 ### Generating the client locally
 
 Install this builder, or invoke it directly from source:
@@ -24,21 +16,19 @@ $ # alternatively:
 $ git clone https://github.com/mittwald/api-client-go-builder
 ```
 
-After cloning this repository, you can generate the client locally. The following commands assume that you
-have a local checkout of the `github.com/mittwald/api-client-go` package available at `path/to/api-client-go`:
+After cloning this repository, you can generate the client locally. The following commands assume that you have a local checkout of the `github.com/mittwald/api-client-go` package available in your local working directory:
 
 ```bash
-$ mittwald-go-client-builder https://api.mittwald.de/v2/openapi.json path/to/api-client-go/mittwaldv2/generated mittwaldv2
+$ mittwald-go-client-builder https://api.mittwald.de/v2/openapi.json ./mittwaldv2/generated mittwaldv2
 
 $ # alternatively:
-$ go run ./cmd/mittwald-go-client-builder/main.go https://api.mittwald.de/v2/openapi.json path/to/api-client-go/mittwaldv2/generated mittwaldv2
+$ go run ./cmd/mittwald-go-client-builder/main.go https://api.mittwald.de/v2/openapi.json ./mittwaldv2/generated mittwaldv2
 ```
 
-After generating, you should switch into the client directory, run the code formatting (not part of the `generate` command because it takes a long time) and the tests and commit the changes:
+After generating, run the code formatting (not part of the `generate` command because it takes a long time) and the tests and commit the changes:
 
 ```bash
-$ cd path/to/api-client-go
-$ goimports -w mittwaldv2/generated
+$ goimports -w ./mittwaldv2/generated
 $ go test ./...
 $ git add .
 $ git commit -m "Update generated client"
