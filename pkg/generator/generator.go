@@ -17,6 +17,8 @@ type GeneratorOpts struct {
 }
 
 func (g *Generator) Build(opts GeneratorOpts) error {
+	log.Info("loading spec", "source", opts.SpecSource)
+
 	doc, err := g.SpecLoader.LoadSpec(opts.SpecSource)
 	if err != nil {
 		return err

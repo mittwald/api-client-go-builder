@@ -48,7 +48,11 @@ func (s *TypeStore) AddClient(typ Type) {
 }
 
 func (s *TypeStore) AddSubtype(name SchemaName, typ Type) {
-	s.SubTypes[name.PackageKey+"."+name.StructName] = typ
+	key := name.PackageKey + "." + name.StructName
+	_, exists := s.SubTypes[key]
+	if !exists {
+		s.SubTypes[name.PackageKey+"."+name.StructName] = typ
+	}
 }
 
 func (s *TypeStore) Len() int {
@@ -66,12 +70,15 @@ func (s *TypeStore) BuildSubtypes() error {
 		}
 
 		visited[name] = struct{}{}
-		log.Debug("building subtypes for", "name", name)
 		if st, ok := typ.(TypeWithSubtypes); ok {
+			log.Debug("building subtypes for", "name", name)
 			if err := st.BuildSubtypes(s); err != nil {
 				return fmt.Errorf("error building subtypes for %s: %w", name, err)
 			}
+		} else {
+			log.Debug("building no subtypes (not supported) for", "name", name)
 		}
+
 		return nil
 	}
 

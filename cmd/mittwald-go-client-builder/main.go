@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/charmbracelet/log"
 	"github.com/mittwald/api-client-go-builder/pkg/generator"
 	"github.com/urfave/cli/v2"
@@ -27,8 +26,6 @@ func main() {
 				Target:          ctx.Args().Get(1),
 				BasePackageName: ctx.Args().Get(2),
 			}
-
-			fmt.Println(genOpts)
 
 			return gen.Build(genOpts)
 		},
