@@ -2,6 +2,7 @@ package generator
 
 import (
 	"fmt"
+	"github.com/mittwald/api-client-go-builder/pkg/generatorx"
 	"github.com/mittwald/api-client-go-builder/pkg/util"
 	"github.com/moznion/gowrtr/generator"
 	orderedmap "github.com/wk8/go-ordered-map/v2"
@@ -58,6 +59,11 @@ func (c *ClientOperationRequest) BuildSubtypes(store *TypeStore) error {
 				return err
 			}
 
+			schema := jsonBody.Schema.Schema()
+			if schema.Description == "" {
+				schema.Description = fmt.Sprintf("%s models the JSON body of a '%s' request", bodyName.StructName, c.operation.Operation.OperationId)
+			}
+
 			c.bodyType = bodyType
 			c.bodyFormat = "json"
 
@@ -77,10 +83,18 @@ func (c *ClientOperationRequest) EmitDeclaration(ctx *GeneratorContext) []genera
 
 	for name, param := range c.pathParams.FromOldest() {
 		fieldName := util.ConvertToTypename(name)
+
+		if d := param.Schema().Schema().Description; d != "" {
+			str = generatorx.AddFieldComment(str, d)
+		}
 		str = str.AddField(fieldName, param.EmitReference(ctx))
 	}
 	for name, param := range c.queryParams.FromOldest() {
 		fieldName := util.ConvertToTypename(name)
+
+		if d := param.Schema().Schema().Description; d != "" {
+			str = generatorx.AddFieldComment(str, d)
+		}
 		str = str.AddField(fieldName, param.EmitReference(ctx))
 	}
 
@@ -89,13 +103,37 @@ func (c *ClientOperationRequest) EmitDeclaration(ctx *GeneratorContext) []genera
 	urlFunc := c.buildURLFunction(ctx)
 	queryFunc := c.buildQueryFunction(ctx)
 
+	strComment := c.buildDocumentation(ctx)
+
 	return []generator.Statement{
+		strComment,
 		str,
+		generatorx.NewWrappingComment("BuildRequest builds an *http.Request instance from this request that may be used with any regular *http.Client instance."),
 		reqFunc, generator.NewNewline(),
 		bodyFunc, generator.NewNewline(),
 		urlFunc, generator.NewNewline(),
 		queryFunc,
 	}
+}
+
+func (c *ClientOperationRequest) buildDocumentation(ctx *GeneratorContext) generator.Statement {
+	strComment := generatorx.NewWrappingCommentf("%s models a request for the '%s' operation.", c.name.StructName, c.operation.Operation.OperationId)
+	if ctx.BuildReferenceLink != nil {
+		if link, ok := ctx.BuildReferenceLink(c.operation.Operation); ok {
+			strComment.Writef(" See [1] for more information.")
+			defer strComment.Writef("\n\n[1]: %s", link)
+		}
+	}
+
+	if s := c.operation.Operation.Summary; s != "" {
+		strComment.Writef("\n\n%s", s)
+	}
+
+	if d := c.operation.Operation.Description; d != "" {
+		strComment.Writef("\n\n%s", d)
+	}
+
+	return strComment
 }
 
 func (c *ClientOperationRequest) buildNewRequestFunction() generator.Statement {

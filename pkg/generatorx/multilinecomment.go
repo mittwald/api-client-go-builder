@@ -23,7 +23,7 @@ func (c *MultilineComment) Generate(indentLevel int) (string, error) {
 	commentLines := make([]string, len(lines))
 
 	for i, line := range lines {
-		commentLines[i] = fmt.Sprintf("%s//%s\n", indent, line)
+		commentLines[i] = fmt.Sprintf("%s// %s\n", indent, strings.TrimPrefix(line, " "))
 	}
 
 	return strings.Join(commentLines, ""), nil

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/charmbracelet/log"
 	"github.com/mittwald/api-client-go-builder/pkg/generatorx"
+	"github.com/mittwald/api-client-go-builder/pkg/reference"
 	"github.com/moznion/gowrtr/generator"
 	"path"
 	"strings"
@@ -117,10 +118,14 @@ func (s *TypeStore) BuildSubtypes() error {
 	return nil
 }
 
-func (s *TypeStore) EmitDeclarations(targetPath string) error {
+func (s *TypeStore) EmitDeclarations(targetPath string, buildReferenceLink reference.ReferenceLinkBuilder) error {
 	log.Info("emitting declarations", "count", s.Len())
 
-	ctx := GeneratorContext{KnownTypes: s, WithDebuggingComments: true}
+	ctx := GeneratorContext{
+		KnownTypes:            s,
+		WithDebuggingComments: true,
+		BuildReferenceLink:    buildReferenceLink,
+	}
 
 	packagesWithTestcases := make(map[string]string)
 

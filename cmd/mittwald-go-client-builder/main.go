@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/charmbracelet/log"
 	"github.com/mittwald/api-client-go-builder/pkg/generator"
+	"github.com/mittwald/api-client-go-builder/pkg/reference"
 	"github.com/urfave/cli/v2"
 	"os"
 	"strconv"
@@ -26,6 +27,7 @@ func main() {
 						SchemaGenerator: generator.SchemaGenerator{
 							SchemaNamingStrategy: generator.MittwaldV1Strategy,
 						},
+						ReferenceLinkBuilder: reference.NewMittwaldReferenceLinkBuilder("v2"),
 					}
 
 					genOpts := generator.GeneratorOpts{

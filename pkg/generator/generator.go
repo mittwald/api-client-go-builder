@@ -3,11 +3,13 @@ package generator
 import (
 	"fmt"
 	"github.com/charmbracelet/log"
+	"github.com/mittwald/api-client-go-builder/pkg/reference"
 )
 
 type Generator struct {
-	SpecLoader      SpecLoader
-	SchemaGenerator SchemaGenerator
+	SpecLoader           SpecLoader
+	SchemaGenerator      SchemaGenerator
+	ReferenceLinkBuilder reference.ReferenceLinkBuilder
 }
 
 type GeneratorOpts struct {
@@ -46,7 +48,7 @@ func (g *Generator) Build(opts GeneratorOpts) error {
 		return fmt.Errorf("error while building subtypes: %w", err)
 	}
 
-	if err := store.EmitDeclarations(opts.Target); err != nil {
+	if err := store.EmitDeclarations(opts.Target, g.ReferenceLinkBuilder); err != nil {
 		return fmt.Errorf("error while emitting types: %w", err)
 	}
 
