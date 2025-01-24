@@ -1,10 +1,8 @@
 package generator
 
 import (
-	"fmt"
 	"github.com/mittwald/api-client-go-builder/pkg/generatorx"
 	"github.com/moznion/gowrtr/generator"
-	"strings"
 )
 
 var _ SchemaType = &StringUUIDType{}
@@ -24,12 +22,12 @@ func (o *StringUUIDType) EmitDeclaration(*GeneratorContext) []generator.Statemen
 		stmts = append(stmts, generatorx.NewMultilineComment(d))
 	}
 
-	stmts = append(stmts, generator.NewRawStatementf("type %s uuid.UUID", o.Names.StructName))
+	stmts = append(stmts, generator.NewRawStatementf("type %s string", o.Names.StructName))
 	return stmts
 }
 
 func (o *StringUUIDType) EmitReference(ctx *GeneratorContext) string {
-	return "uuid.UUID"
+	return "string"
 }
 
 func (o *StringUUIDType) BuildExample(*GeneratorContext, int, int) any {
@@ -45,6 +43,5 @@ func (o *StringUUIDType) BuildExample(*GeneratorContext, int, int) any {
 }
 
 func (o *StringUUIDType) EmitToString(ref string, _ *GeneratorContext) string {
-	ref = strings.TrimPrefix(ref, "*")
-	return fmt.Sprintf("%s.String()", ref)
+	return ref
 }
