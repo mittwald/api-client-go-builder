@@ -218,7 +218,7 @@ func (c *Client) EmitDeclaration(ctx *GeneratorContext) []generator.Statement {
 			generator.NewIf("err != nil", errorReturnWithResponse),
 			generator.NewNewline(),
 			generator.NewIf("httpRes.StatusCode >= 400",
-				generator.NewRawStatement("err := &httperr.ErrUnexpectedResponse{Response: httpRes}"),
+				generator.NewRawStatement("err := httperr.ErrFromResponse(httpRes)"),
 				errorReturnWithResponse,
 			),
 			generator.NewNewline(),
