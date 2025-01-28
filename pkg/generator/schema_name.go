@@ -40,6 +40,7 @@ func (n *SchemaName) BuildRoot() *generator.Root {
 		generator.NewNewline(),
 		// we're running goimports after generating, so it does not matter if the uuid package is actually needed in a file
 		generator.NewImport("github.com/google/uuid"),
+		generator.NewImport("github.com/mittwald/api-client-go/pkg/httperr"),
 		generator.NewNewline(),
 	)
 }
