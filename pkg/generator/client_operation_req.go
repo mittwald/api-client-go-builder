@@ -25,7 +25,7 @@ func (c *ClientOperationRequest) Name() SchemaName {
 	return c.name
 }
 
-func (c *ClientOperationRequest) BuildSubtypes(store *TypeStore) error {
+func (c *ClientOperationRequest) BuildSubtypes(_ GeneratorOpts, store *TypeStore) error {
 	c.pathParams = orderedmap.New[string, SchemaType]()
 	c.queryParams = orderedmap.New[string, SchemaType]()
 

@@ -25,9 +25,9 @@ func (o *OptionalType) IsLightweight() bool {
 	//return true
 }
 
-func (o *OptionalType) BuildSubtypes(store *TypeStore) error {
+func (o *OptionalType) BuildSubtypes(opts GeneratorOpts, store *TypeStore) error {
 	if s, ok := o.InnerType.(TypeWithSubtypes); ok {
-		return s.BuildSubtypes(store)
+		return s.BuildSubtypes(opts, store)
 	}
 	return nil
 }

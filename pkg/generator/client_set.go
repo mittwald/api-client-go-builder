@@ -41,17 +41,18 @@ func (c *ClientSet) collectOperationsWithTag(tag string) []OperationWithMeta {
 	return operations
 }
 
-func (c *ClientSet) BuildSubtypes(store *TypeStore) error {
+func (c *ClientSet) BuildSubtypes(opts GeneratorOpts, store *TypeStore) error {
 	c.clients = orderedmap.New[string, *Client]()
 
 	for _, tag := range c.spec.Tags {
 		clientFunctionName := util.ConvertToTypename(tag.Name)
 		clientTypeName := "Client"
+		clientPackageKey := strings.ToLower(clientFunctionName) + "client" + opts.APIVersion
 
 		clientNameSet := c.name
 		clientNameSet.StructName = clientTypeName
-		clientNameSet.PackageKey = strings.ToLower(clientFunctionName)
-		clientNameSet.PackagePath = path.Join(path.Dir(clientNameSet.PackagePath), strings.ToLower(clientFunctionName), "client.go")
+		clientNameSet.PackageKey = clientPackageKey
+		clientNameSet.PackagePath = path.Join(path.Dir(clientNameSet.PackagePath), clientPackageKey, "client.go")
 
 		client := Client{
 			name:       clientNameSet,

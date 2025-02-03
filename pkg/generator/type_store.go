@@ -60,7 +60,7 @@ func (s *TypeStore) Len() int {
 	return len(s.ComponentSchemas) + len(s.SubTypes) + len(s.Clients)
 }
 
-func (s *TypeStore) BuildSubtypes() error {
+func (s *TypeStore) BuildSubtypes(opts GeneratorOpts) error {
 	log.Info("building subtypes", "count", s.Len())
 
 	visited := make(map[string]struct{})
@@ -73,7 +73,7 @@ func (s *TypeStore) BuildSubtypes() error {
 		visited[name] = struct{}{}
 		if st, ok := typ.(TypeWithSubtypes); ok {
 			log.Debug("building subtypes for", "name", name)
-			if err := st.BuildSubtypes(s); err != nil {
+			if err := st.BuildSubtypes(opts, s); err != nil {
 				return fmt.Errorf("error building subtypes for %s: %w", name, err)
 			}
 		} else {

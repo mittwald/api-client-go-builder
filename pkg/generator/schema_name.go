@@ -47,7 +47,7 @@ func (n *SchemaName) BuildRoot() *generator.Root {
 
 type SchemaNamingStrategy func(schemaName string) SchemaName
 
-func MittwaldV1Strategy(schemaName string) SchemaName {
+func MittwaldVersionedSchemaStrategy(schemaName string) SchemaName {
 	// Example:
 	// de.mittwald.v1.sshuser.SshUser
 	parts := strings.Split(schemaName, ".")
@@ -61,5 +61,22 @@ func MittwaldV1Strategy(schemaName string) SchemaName {
 		PackagePath:    path.Join("schemas", pkg+version, strings.ToLower(name)+".go"),
 		ForceNamedType: true,
 	}
+}
 
+func MittwaldAPIVersionSchemaStrategy(apiVersion string) SchemaNamingStrategy {
+	return func(schemaName string) SchemaName {
+		// Example:
+		// de.mittwald.v1.sshuser.SshUser
+		parts := strings.Split(schemaName, ".")
+		name := util.UpperFirst(parts[len(parts)-1])
+		pkg := parts[len(parts)-2]
+		pkgLong := pkg + apiVersion
+
+		return SchemaName{
+			StructName:     name,
+			PackageKey:     pkgLong,
+			PackagePath:    path.Join("schemas", pkgLong, strings.ToLower(name)+".go"),
+			ForceNamedType: true,
+		}
+	}
 }

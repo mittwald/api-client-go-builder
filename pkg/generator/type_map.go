@@ -12,7 +12,7 @@ type MapType struct {
 	ItemType SchemaType
 }
 
-func (o *MapType) BuildSubtypes(store *TypeStore) error {
+func (o *MapType) BuildSubtypes(_ GeneratorOpts, store *TypeStore) error {
 	if o.ItemType.IsLightweight() {
 		return nil
 	}

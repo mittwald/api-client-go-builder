@@ -16,6 +16,7 @@ type GeneratorOpts struct {
 	SpecSource      string
 	Target          string
 	BasePackageName string
+	APIVersion      string
 }
 
 func (g *Generator) Build(opts GeneratorOpts) error {
@@ -44,7 +45,7 @@ func (g *Generator) Build(opts GeneratorOpts) error {
 		return fmt.Errorf("error building clients: %w", err)
 	}
 
-	if err := store.BuildSubtypes(); err != nil {
+	if err := store.BuildSubtypes(opts); err != nil {
 		return fmt.Errorf("error while building subtypes: %w", err)
 	}
 

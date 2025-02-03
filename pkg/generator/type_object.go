@@ -22,7 +22,7 @@ func (o *ObjectType) IsLightweight() bool {
 	return false
 }
 
-func (o *ObjectType) BuildSubtypes(store *TypeStore) error {
+func (o *ObjectType) BuildSubtypes(_ GeneratorOpts, store *TypeStore) error {
 	s := o.schema.Schema()
 
 	o.subtypesBuilt = true

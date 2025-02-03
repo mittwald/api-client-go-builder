@@ -17,7 +17,7 @@ func (o *ReferenceType) IsLightweight() bool {
 	return true
 }
 
-func (o *ReferenceType) BuildSubtypes(store *TypeStore) error {
+func (o *ReferenceType) BuildSubtypes(_ GeneratorOpts, store *TypeStore) error {
 	target, err := store.LookupReference(o.Target)
 	if err != nil {
 		return fmt.Errorf("could not resolve reference '%s': %w", o.Target, err)

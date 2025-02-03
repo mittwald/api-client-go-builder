@@ -13,9 +13,9 @@ type ArrayType struct {
 	ItemType SchemaType
 }
 
-func (o *ArrayType) BuildSubtypes(store *TypeStore) error {
+func (o *ArrayType) BuildSubtypes(opts GeneratorOpts, store *TypeStore) error {
 	if s, ok := o.ItemType.(TypeWithSubtypes); ok {
-		if err := s.BuildSubtypes(store); err != nil {
+		if err := s.BuildSubtypes(opts, store); err != nil {
 			return err
 		}
 	}

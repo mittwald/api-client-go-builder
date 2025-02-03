@@ -27,5 +27,5 @@ type TypeWithValidation interface {
 }
 
 type TypeWithSubtypes interface {
-	BuildSubtypes(store *TypeStore) error
+	BuildSubtypes(opts GeneratorOpts, store *TypeStore) error
 }

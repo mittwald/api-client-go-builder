@@ -53,7 +53,7 @@ func (c *Client) Name() SchemaName {
 	return c.name
 }
 
-func (c *Client) BuildSubtypes(store *TypeStore) error {
+func (c *Client) BuildSubtypes(_ GeneratorOpts, store *TypeStore) error {
 	for i, op := range c.operations {
 		if op.Operation.OperationId == "" {
 			log.Warn("empty operation id", "path", op.Path, "method", op.Method)

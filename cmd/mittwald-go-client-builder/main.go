@@ -22,18 +22,21 @@ func main() {
 				Action: func(ctx *cli.Context) error {
 					log.SetLevel(log.DebugLevel)
 
+					apiVersion := "v2"
+
 					gen := generator.Generator{
 						SpecLoader: generator.NewURLSpecLoader(nil),
 						SchemaGenerator: generator.SchemaGenerator{
-							SchemaNamingStrategy: generator.MittwaldV1Strategy,
+							SchemaNamingStrategy: generator.MittwaldAPIVersionSchemaStrategy(apiVersion),
 						},
-						ReferenceLinkBuilder: reference.NewMittwaldReferenceLinkBuilder("v2"),
+						ReferenceLinkBuilder: reference.NewMittwaldReferenceLinkBuilder(apiVersion),
 					}
 
 					genOpts := generator.GeneratorOpts{
 						SpecSource:      ctx.Args().Get(0),
 						Target:          ctx.Args().Get(1),
 						BasePackageName: ctx.Args().Get(2),
+						APIVersion:      apiVersion,
 					}
 
 					return gen.Build(genOpts)

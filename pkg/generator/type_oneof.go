@@ -13,7 +13,7 @@ type OneOfType struct {
 	AlternativeTypes []SchemaType
 }
 
-func (o *OneOfType) BuildSubtypes(store *TypeStore) error {
+func (o *OneOfType) BuildSubtypes(_ GeneratorOpts, store *TypeStore) error {
 	for i, alt := range o.AlternativeTypes {
 		subTypeName := o.Names.ForSubtype(o.alternativeName(i))
 		store.AddSubtype(subTypeName, alt)
