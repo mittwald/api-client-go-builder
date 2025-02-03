@@ -7,6 +7,7 @@ import (
 	"github.com/mittwald/api-client-go-builder/pkg/util"
 	"github.com/moznion/gowrtr/generator"
 	v3 "github.com/pb33f/libopenapi/datamodel/high/v3"
+	orderedmap "github.com/wk8/go-ordered-map/v2"
 	"net/http"
 	"path"
 	"strconv"
@@ -89,7 +90,7 @@ func (c *Client) BuildSubtypes(store *TypeStore) error {
 		requestName.StructName = operationName + "Request"
 		requestName.PackagePath = path.Join(path.Dir(requestName.PackagePath), strings.ToLower(operationName)+"_request.go")
 
-		responses := make(map[int64]statusResponseSchemaTuple)
+		responses := orderedmap.New[int64, statusResponseSchemaTuple]()
 
 		for code, response := range c.operations[i].Operation.Responses.Codes.FromOldest() {
 			codeAsInt, err := strconv.ParseInt(code, 10, strconv.IntSize)
@@ -99,11 +100,11 @@ func (c *Client) BuildSubtypes(store *TypeStore) error {
 
 			if codeAsInt >= 200 && codeAsInt < 400 && response.Content != nil {
 				if schema, ok := response.Content.Get("application/json"); ok {
-					responses[codeAsInt] = statusResponseSchemaTuple{
+					responses.Set(codeAsInt, statusResponseSchemaTuple{
 						status:   codeAsInt,
 						response: response,
 						schema:   schema,
-					}
+					})
 				}
 			}
 		}
@@ -111,12 +112,12 @@ func (c *Client) BuildSubtypes(store *TypeStore) error {
 		c.operations[i].Name = operationName
 		c.operations[i].requestType = &ClientOperationRequest{name: requestName, operation: &c.operations[i]}
 
-		if len(responses) == 1 {
+		if responses.Len() == 1 {
 			responseName := c.name
 			responseName.StructName = operationName + "Response"
 			responseName.PackagePath = path.Join(path.Dir(requestName.PackagePath), strings.ToLower(operationName)+"_response.go")
 
-			for _, r := range responses {
+			for _, r := range responses.FromOldest() {
 				responseType, err := BuildTypeFromSchema(responseName, r.schema.Schema, store)
 				if err != nil {
 					return fmt.Errorf("error building response type for operation %s: %w", op.Operation.OperationId, err)
@@ -128,10 +129,10 @@ func (c *Client) BuildSubtypes(store *TypeStore) error {
 				store.AddClient(responseType)
 				break
 			}
-		} else if len(responses) > 1 {
+		} else if responses.Len() > 1 {
 			statusSubtypes := make([]SchemaType, 0)
 
-			for _, r := range responses {
+			for _, r := range responses.FromOldest() {
 				statusName := util.ConvertToTypename(http.StatusText(int(r.status)))
 
 				responseName := c.name
