@@ -28,6 +28,7 @@ func ConvertToTypename(input string) string {
 	cleaned = strings.Replace(cleaned, "_", "", -1)
 	cleaned = strings.Replace(cleaned, " ", "", -1)
 	cleaned = strings.Replace(cleaned, "/", "", -1)
+	cleaned = strings.Replace(cleaned, ".", "", -1)
 
 	for _, i := range commonInitialisms {
 		cleaned = strings.Replace(cleaned, i, strings.ToUpper(i), -1)
