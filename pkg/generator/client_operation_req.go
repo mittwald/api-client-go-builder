@@ -144,10 +144,14 @@ func (c *ClientOperationRequest) buildNewRequestFunction() generator.Statement {
 
 	errorReturn := generator.NewReturnStatement("nil", "err")
 	funcStmts := []generator.Statement{
-		generator.NewRawStatement("body, err := r.body()"),
+		generator.NewRawStatement("body, contentType, err := r.body()"),
 		generator.NewIf("err != nil", errorReturn),
 		generator.NewNewline(),
-		generator.NewReturnStatement(fmt.Sprintf("http.NewRequest(%s, r.url(), body)", method)),
+		//generator.NewReturnStatement(fmt.Sprintf("http.NewRequest(%s, r.url(), body)", method)),
+		generator.NewRawStatementf("req, err := http.NewRequest(%s, r.url(), body)", method),
+		generator.NewIf("err != nil", errorReturn),
+		generator.NewRawStatement("req.Header.Set(\"Content-Type\", contentType)"),
+		generator.NewReturnStatement("req", "nil"),
 	}
 
 	return generator.NewFunc(receiver, signature, funcStmts...)
@@ -155,17 +159,17 @@ func (c *ClientOperationRequest) buildNewRequestFunction() generator.Statement {
 
 func (c *ClientOperationRequest) buildBodyFunction() generator.Statement {
 	receiver := generator.NewFuncReceiver("r", "*"+c.name.StructName)
-	signature := generator.NewFuncSignature("body").AddReturnTypes("io.Reader", "error")
+	signature := generator.NewFuncSignature("body").AddReturnTypes("io.Reader", "string", "error")
 
 	if c.bodyFormat == "json" {
 		return generator.NewFunc(receiver, signature,
 			generator.NewRawStatement("out, err := json.Marshal(&r.Body)"),
-			generator.NewIf("err != nil", generator.NewReturnStatement("nil", `fmt.Errorf("error while marshalling JSON: %w", err)`)),
-			generator.NewReturnStatement("bytes.NewReader(out)", "nil"),
+			generator.NewIf("err != nil", generator.NewReturnStatement("nil", `""`, `fmt.Errorf("error while marshalling JSON: %w", err)`)),
+			generator.NewReturnStatement("bytes.NewReader(out)", `"application/json"`, "nil"),
 		)
 	}
 
-	return generator.NewFunc(receiver, signature, generator.NewReturnStatement("nil", "nil"))
+	return generator.NewFunc(receiver, signature, generator.NewReturnStatement("nil", `""`, "nil"))
 }
 
 func (c *ClientOperationRequest) buildQueryFunction(ctx *GeneratorContext) generator.Statement {
