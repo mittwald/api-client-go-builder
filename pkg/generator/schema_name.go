@@ -69,7 +69,7 @@ func MittwaldAPIVersionSchemaStrategy(apiVersion string) SchemaNamingStrategy {
 		// de.mittwald.v1.sshuser.SshUser
 		parts := strings.Split(schemaName, ".")
 		name := util.UpperFirst(parts[len(parts)-1])
-		pkg := parts[len(parts)-2]
+		pkg := util.ConvertToPackagename(parts[len(parts)-2])
 		pkgLong := pkg + apiVersion
 
 		return SchemaName{
