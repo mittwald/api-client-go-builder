@@ -240,15 +240,27 @@ func (c *ClientOperationRequest) buildURLFunction(ctx *GeneratorContext) generat
 		return "%s"
 	})
 
-	builtUrlStmt := fmt.Sprintf("%#v", builtUrl)
+	builtUrlPathStmt := fmt.Sprintf("%#v", builtUrl)
 	if c.pathParams.Len() > 0 {
-		builtUrlStmt = fmt.Sprintf("fmt.Sprintf(%#v, %s)", builtUrl, strings.Join(builtUrlParams, ", "))
+		builtUrlPathStmt = fmt.Sprintf("fmt.Sprintf(%#v, %s)", builtUrl, strings.Join(builtUrlParams, ", "))
+	}
+
+	buildURLStmt := fmt.Sprintf(`url.URL{
+	Path: %s,
+}`, builtUrlPathStmt)
+
+	if c.queryParams.Len() > 0 {
+		buildURLStmt = fmt.Sprintf(`url.URL{
+	Path: %s,
+	RawQuery: r.query().Encode(),
+}`, builtUrlPathStmt)
 	}
 
 	urlFunc := generator.NewFunc(
 		generator.NewFuncReceiver("r", "*"+c.name.StructName),
 		generator.NewFuncSignature("url").AddReturnTypes("string"),
-		generator.NewReturnStatement(builtUrlStmt),
+		generator.NewRawStatementf("u := %s", buildURLStmt),
+		generator.NewReturnStatement("u.String()"),
 	)
 
 	return urlFunc
