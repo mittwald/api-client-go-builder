@@ -7,6 +7,7 @@ import (
 	v3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 	"io"
 	"net/http"
+	"os"
 )
 
 type SpecLoader interface {
@@ -45,12 +46,16 @@ func (l *urlSpecLoader) LoadSpec(url string) (*libopenapi.DocumentModel[v3.Docum
 		return nil, fmt.Errorf("error reading response from %s: %w", url, err)
 	}
 
+	return buildSpec(specJson)
+}
+
+func buildSpec(specByteArray []byte) (*libopenapi.DocumentModel[v3.Document], error) {
 	config := datamodel.DocumentConfiguration{
 		AllowFileReferences:   true,
 		AllowRemoteReferences: false,
 	}
 
-	document, err := libopenapi.NewDocumentWithConfiguration(specJson, &config)
+	document, err := libopenapi.NewDocumentWithConfiguration(specByteArray, &config)
 	if err != nil {
 		return nil, fmt.Errorf("error while opening spec as OpenAPI document: %w", err)
 	}
@@ -61,4 +66,19 @@ func (l *urlSpecLoader) LoadSpec(url string) (*libopenapi.DocumentModel[v3.Docum
 	}
 
 	return model, nil
+}
+
+type fileSpecLoader struct{}
+
+func NewFileSpecLoader() SpecLoader {
+	return &fileSpecLoader{}
+}
+
+func (f *fileSpecLoader) LoadSpec(source string) (*libopenapi.DocumentModel[v3.Document], error) {
+	file, err := os.ReadFile(source)
+	if err != nil {
+		return nil, err
+	}
+
+	return buildSpec(file)
 }
