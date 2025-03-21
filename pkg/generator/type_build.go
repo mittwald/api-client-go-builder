@@ -18,7 +18,7 @@ func BuildTypeFromSchema(names SchemaName, schema *base.SchemaProxy, knownTypes 
 		for i, altSchema := range schema.Schema().OneOf {
 			altType, err := BuildTypeFromSchema(names.ForSubtype(fmt.Sprintf("alternative%d", i+1)), altSchema, knownTypes)
 			if err != nil {
-				return nil, fmt.Errorf("error building alternative type %i for %s: %w", i, names.StructName, err)
+				return nil, fmt.Errorf("error building alternative type %d for %s: %w", i, names.StructName, err)
 			}
 
 			alternativeTypes[i] = altType
