@@ -19,13 +19,54 @@ func main() {
 			{
 				Name:  "generate",
 				Usage: "Generate client code from OpenAPI spec",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:  "url",
+						Usage: "The URL to the openapi.json",
+					},
+					&cli.StringFlag{
+						Name:  "path",
+						Usage: "The path to your local openapi.json",
+					},
+					&cli.StringFlag{
+						Name:     "target",
+						Usage:    "The target directory, into which the client shall be generated",
+						Required: true,
+					},
+					&cli.StringFlag{
+						Name:     "pkg",
+						Usage:    "The package name to be generated",
+						Required: true,
+					},
+				},
+				Before: func(c *cli.Context) error {
+					url := c.String("url")
+					path := c.String("path")
+
+					if url == "" && path == "" {
+						return fmt.Errorf("either --url or --path must be provided")
+					}
+					if url != "" && path != "" {
+						return fmt.Errorf("only one of --url or --path can be provided, not both")
+					}
+
+					return nil
+				},
 				Action: func(ctx *cli.Context) error {
+					source := ctx.String("url")
+					specLoader := generator.NewURLSpecLoader(nil)
+
+					if source == "" {
+						source = ctx.String("path")
+						specLoader = generator.NewFileSpecLoader()
+					}
+
 					log.SetLevel(log.DebugLevel)
 
 					apiVersion := "v2"
 
 					gen := generator.Generator{
-						SpecLoader: generator.NewURLSpecLoader(nil),
+						SpecLoader: specLoader,
 						SchemaGenerator: generator.SchemaGenerator{
 							SchemaNamingStrategy: generator.MittwaldAPIVersionSchemaStrategy(apiVersion),
 						},
@@ -33,9 +74,9 @@ func main() {
 					}
 
 					genOpts := generator.GeneratorOpts{
-						SpecSource:      ctx.Args().Get(0),
-						Target:          ctx.Args().Get(1),
-						BasePackageName: ctx.Args().Get(2),
+						SpecSource:      source,
+						Target:          ctx.String("target"),
+						BasePackageName: ctx.String("pkg"),
 						APIVersion:      apiVersion,
 					}
 
