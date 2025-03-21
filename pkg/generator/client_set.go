@@ -5,6 +5,7 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/mittwald/api-client-go-builder/pkg/util"
 	"github.com/moznion/gowrtr/generator"
+	"github.com/pb33f/libopenapi/datamodel/high/base"
 	v3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 	orderedmap "github.com/wk8/go-ordered-map/v2"
 	"path"
@@ -28,6 +29,9 @@ func (c *ClientSet) collectOperationsWithTag(tag string) []OperationWithMeta {
 
 	for urlPath, items := range c.spec.Paths.PathItems.FromOldest() {
 		for method, op := range items.GetOperations().FromOldest() {
+			if len(op.Tags) == 0 {
+				op.Tags = []string{emptyTag}
+			}
 			if util.SliceContains(op.Tags, tag) {
 				operations = append(operations, OperationWithMeta{
 					Path:      urlPath,
@@ -41,10 +45,13 @@ func (c *ClientSet) collectOperationsWithTag(tag string) []OperationWithMeta {
 	return operations
 }
 
+var emptyTag = "Misc"
+
 func (c *ClientSet) BuildSubtypes(opts GeneratorOpts, store *TypeStore) error {
 	c.clients = orderedmap.New[string, *Client]()
 
-	for _, tag := range c.spec.Tags {
+	tags := append(c.spec.Tags, &base.Tag{Name: emptyTag})
+	for _, tag := range tags {
 		clientFunctionName := util.ConvertToTypename(tag.Name)
 		clientTypeName := "Client"
 		clientPackageKey := strings.ToLower(clientFunctionName) + "client" + opts.APIVersion
