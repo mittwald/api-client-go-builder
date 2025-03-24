@@ -8,6 +8,7 @@ import (
 	"github.com/pb33f/libopenapi/datamodel/high/base"
 	v3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 	orderedmap "github.com/wk8/go-ordered-map/v2"
+	"golang.org/x/exp/slices"
 	"path"
 	"strings"
 )
@@ -50,7 +51,10 @@ var emptyTag = "Misc"
 func (c *ClientSet) BuildSubtypes(opts GeneratorOpts, store *TypeStore) error {
 	c.clients = orderedmap.New[string, *Client]()
 
-	tags := append(c.spec.Tags, &base.Tag{Name: emptyTag})
+	tags := c.spec.Tags[:]
+	if len(c.collectOperationsWithTag(emptyTag)) > 0 && !slices.ContainsFunc(tags, func(tag *base.Tag) bool { return tag.Name == emptyTag }) {
+		tags = append(tags, &base.Tag{Name: emptyTag})
+	}
 	for _, tag := range tags {
 		clientFunctionName := util.ConvertToTypename(tag.Name)
 		clientTypeName := "Client"
