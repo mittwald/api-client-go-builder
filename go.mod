@@ -9,6 +9,7 @@ require (
 	github.com/pb33f/libopenapi v0.18.7
 	github.com/urfave/cli/v2 v2.27.5
 	github.com/wk8/go-ordered-map/v2 v2.1.9-0.20240815153524-6ea36470d1bd
+	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
 	golang.org/x/text v0.19.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -33,6 +34,5 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/vmware-labs/yaml-jsonpath v0.3.2 // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
-	golang.org/x/exp v0.0.0-20231006140011-7918f672742d // indirect
 	golang.org/x/sys v0.26.0 // indirect
 )
