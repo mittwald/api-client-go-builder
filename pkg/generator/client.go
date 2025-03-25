@@ -202,6 +202,7 @@ func (c *Client) EmitDeclaration(ctx *GeneratorContext) []generator.Statement {
 			AddParameters(
 				generator.NewFuncParameter("ctx", "context.Context"),
 				generator.NewFuncParameter("req", op.requestType.EmitReference(ctx)),
+				generator.NewFuncParameter("reqEditors", "...func(req *http.Request) error"),
 			)
 
 		errorReturn := generator.NewReturnStatement("nil", "err")
@@ -212,7 +213,7 @@ func (c *Client) EmitDeclaration(ctx *GeneratorContext) []generator.Statement {
 		}
 
 		operationFuncStmts := []generator.Statement{
-			generator.NewRawStatement("httpReq, err := req.BuildRequest()"),
+			generator.NewRawStatement("httpReq, err := req.BuildRequest(reqEditors...)"),
 			generator.NewIf("err != nil", errorReturn),
 			generator.NewNewline(),
 			generator.NewRawStatement("httpRes, err := c.client.Do(httpReq.WithContext(ctx))"),
