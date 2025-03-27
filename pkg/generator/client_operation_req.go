@@ -138,7 +138,7 @@ func (c *ClientOperationRequest) buildDocumentation(ctx *GeneratorContext) gener
 
 func (c *ClientOperationRequest) buildNewRequestFunction() generator.Statement {
 	receiver := generator.NewFuncReceiver("r", "*"+c.name.StructName)
-	signature := generator.NewFuncSignature("BuildRequest").AddReturnTypes("*http.Request", "error")
+	signature := generator.NewFuncSignature("BuildRequest").AddParameters(generator.NewFuncParameter("reqEditors", "...func(req *http.Request) error")).AddReturnTypes("*http.Request", "error")
 
 	method := fmt.Sprintf("http.Method%s", util.UpperFirst(c.operation.Method))
 
@@ -151,6 +151,11 @@ func (c *ClientOperationRequest) buildNewRequestFunction() generator.Statement {
 		generator.NewRawStatementf("req, err := http.NewRequest(%s, r.url(), body)", method),
 		generator.NewIf("err != nil", errorReturn),
 		generator.NewRawStatement("req.Header.Set(\"Content-Type\", contentType)"),
+
+		generator.NewRawStatement("for _, editor := range reqEditors {"),
+		generator.NewIf("err := editor(req); err != nil", errorReturn),
+		generator.NewRawStatement("}"),
+
 		generator.NewReturnStatement("req", "nil"),
 	}
 
