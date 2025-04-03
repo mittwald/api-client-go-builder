@@ -244,7 +244,7 @@ func (c *ClientOperationRequest) buildURLFunction(ctx *GeneratorContext) generat
 		param := c.pathParams.Value(name)
 
 		if ts, ok := param.(TypeWithStringConversion); ok {
-			elem := "url.PathEscape(" + "fmt.Sprintf(\"%s\", &" + ts.EmitToString("r."+paramName, ctx) + "))"
+			elem := "url.PathEscape(" + "fmt.Sprintf(\"%s\", " + ts.EmitToString("r."+paramName, ctx) + "))"
 			builtUrlParams = append(builtUrlParams, elem)
 		}
 

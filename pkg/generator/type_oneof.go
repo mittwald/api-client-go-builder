@@ -205,7 +205,7 @@ func (o *OneOfType) emitToStringFunc(ctx *GeneratorContext) generator.Statement 
 	jsonMarshalStmts = append(jsonMarshalStmts, generator.NewReturnStatement(`"null"`))
 
 	return generator.NewFunc(
-		generator.NewFuncReceiver("a", fmt.Sprintf("*%s", o.Names.StructName)),
+		generator.NewFuncReceiver("a", fmt.Sprintf("%s", o.Names.StructName)),
 		generator.NewFuncSignature("String").
 			AddReturnTypes("string"),
 		jsonMarshalStmts...,
