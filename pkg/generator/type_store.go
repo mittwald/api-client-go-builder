@@ -145,7 +145,7 @@ func (s *TypeStore) EmitDeclarations(targetPath string, buildReferenceLink refer
 			if schemaType, ok := typ.(SchemaType); ok {
 				schemaJson, _ := schemaType.Schema().Render()
 				root = root.AddStatements(
-					generator.NewComment("This data type was generated from the following JSON schema:"),
+					generator.NewComment(" This data type was generated from the following JSON schema:"),
 					generatorx.NewMultilineComment(strings.TrimRight(string(schemaJson), "\n")),
 					generator.NewNewline(),
 				)
