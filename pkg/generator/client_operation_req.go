@@ -209,7 +209,12 @@ func (c *ClientOperationRequest) buildQueryFunction(ctx *GeneratorContext) gener
 				stmts = append(stmts, stmt)
 			}
 		} else if t, ok := param.(TypeWithStringConversion); ok {
-			var stmt generator.Statement = generator.NewRawStatementf("q.Set(%#v, %s)", name, t.EmitToString("r."+fieldName, ctx))
+			//var stmt generator.Statement = generator.NewRawStatementf("q.Set(%#v, %s)", name, t.EmitToString("r."+fieldName, ctx))
+			// q.Set("filter", r.Filter)
+			// q.Set("filter", fmt.Sprintf("%s", r.Filter))
+
+			//value := t.EmitToString("r."+fieldName, ctx)
+			var stmt generator.Statement = generator.NewRawStatement("q.Set(" + fmt.Sprintf("%#v", name) + ", fmt.Sprintf(\"%s\", " + t.EmitToString("r."+fieldName, ctx) + "))")
 			if _, isOptional := param.(*OptionalType); isOptional {
 				stmt = generator.NewIf(fmt.Sprintf("r.%s != nil", fieldName), stmt)
 			}
@@ -239,7 +244,8 @@ func (c *ClientOperationRequest) buildURLFunction(ctx *GeneratorContext) generat
 		param := c.pathParams.Value(name)
 
 		if ts, ok := param.(TypeWithStringConversion); ok {
-			builtUrlParams = append(builtUrlParams, "url.PathEscape("+ts.EmitToString("r."+paramName, ctx)+")")
+			elem := "url.PathEscape(" + "fmt.Sprintf(\"%s\", &" + ts.EmitToString("r."+paramName, ctx) + "))"
+			builtUrlParams = append(builtUrlParams, elem)
 		}
 
 		return "%s"

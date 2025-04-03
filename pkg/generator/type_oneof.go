@@ -36,9 +36,17 @@ func (o *OneOfType) EmitDeclaration(ctx *GeneratorContext) []generator.Statement
 	stmts := make([]generator.Statement, 0)
 
 	structType := generator.NewStruct(o.Names.StructName)
+	convertableToString := true
 	for i, alt := range o.AlternativeTypes {
 		name := o.alternativeName(i)
 		structType = structType.AddField(name, "*"+alt.EmitReference(ctx))
+		if ts, ok := alt.(TypeWithStringConversion); !ok {
+			convertableToString = false
+		} else {
+			if ts.EmitToString(name, ctx) == invalidNoStringConversion {
+				convertableToString = false
+			}
+		}
 	}
 
 	stmts = append(stmts,
@@ -49,6 +57,14 @@ func (o *OneOfType) EmitDeclaration(ctx *GeneratorContext) []generator.Statement
 		generator.NewNewline(),
 		o.emitValidateFunc(ctx),
 	)
+
+	if convertableToString {
+		stmts = append(stmts,
+			generator.NewNewline(),
+			o.emitToStringFunc(ctx),
+		)
+	}
+
 	return stmts
 }
 
@@ -167,6 +183,35 @@ func (o *OneOfType) emitJSONMarshalFunc() generator.Statement {
 	)
 }
 
+func (o *OneOfType) emitToStringFunc(ctx *GeneratorContext) generator.Statement {
+	jsonMarshalStmts := make([]generator.Statement, 0)
+	for i, alt := range o.AlternativeTypes {
+		returnStatement := generator.NewReturnStatement(`"null"`)
+
+		ts, ok := alt.(TypeWithStringConversion)
+		if ok {
+			res := fmt.Sprintf("*a.%s", ts.EmitToString(o.alternativeName(i), ctx))
+			returnStatement = generator.NewReturnStatement(res)
+		}
+
+		jsonMarshalStmts = append(
+			jsonMarshalStmts,
+			generator.NewIf(
+				fmt.Sprintf("a.%s != nil", o.alternativeName(i)),
+				returnStatement,
+			),
+		)
+	}
+	jsonMarshalStmts = append(jsonMarshalStmts, generator.NewReturnStatement(`"null"`))
+
+	return generator.NewFunc(
+		generator.NewFuncReceiver("a", fmt.Sprintf("*%s", o.Names.StructName)),
+		generator.NewFuncSignature("String").
+			AddReturnTypes("string"),
+		jsonMarshalStmts...,
+	)
+}
+
 func (o *OneOfType) EmitReference(ctx *GeneratorContext) string {
 	if ctx.CurrentPackage == o.Names.PackageKey {
 		return o.Names.StructName
@@ -181,4 +226,17 @@ func (o *OneOfType) EmitValidation(ref string, ctx *GeneratorContext) string {
 
 func (o *OneOfType) BuildExample(ctx *GeneratorContext, level, maxLevel int) any {
 	return o.AlternativeTypes[0].BuildExample(ctx, level, maxLevel)
+}
+
+func (o *OneOfType) EmitToString(ref string, ctx *GeneratorContext) string {
+	for _, alternativeType := range o.AlternativeTypes {
+		ts, ok := alternativeType.(TypeWithStringConversion)
+		if !ok {
+			continue
+		}
+
+		return ts.EmitToString(ref, ctx)
+	}
+
+	return invalidNoStringConversion
 }

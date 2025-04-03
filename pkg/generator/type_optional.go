@@ -69,13 +69,15 @@ func (o *OptionalType) BuildExample(ctx *GeneratorContext, level, maxLevel int) 
 	return o.InnerType.BuildExample(ctx, level+1, maxLevel)
 }
 
+const invalidNoStringConversion = "invalid-no-string-conversion"
+
 func (o *OptionalType) EmitToString(ref string, ctx *GeneratorContext) string {
 	if ts, ok := o.InnerType.(TypeWithStringConversion); ok {
 		return ts.EmitToString("*"+ref, ctx)
 	}
 
 	// if they want compile errors, give them compile errors!
-	return "invalid-no-string-conversion"
+	return invalidNoStringConversion
 }
 
 func (o *OptionalType) Unpack() SchemaType {
