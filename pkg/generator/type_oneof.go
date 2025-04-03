@@ -184,7 +184,7 @@ func (o *OneOfType) emitJSONMarshalFunc() generator.Statement {
 }
 
 func (o *OneOfType) emitToStringFunc(ctx *GeneratorContext) generator.Statement {
-	jsonMarshalStmts := make([]generator.Statement, 0)
+	stmts := make([]generator.Statement, 0)
 	for i, alt := range o.AlternativeTypes {
 		returnStatement := generator.NewReturnStatement(`"null"`)
 
@@ -194,21 +194,21 @@ func (o *OneOfType) emitToStringFunc(ctx *GeneratorContext) generator.Statement 
 			returnStatement = generator.NewReturnStatement(res)
 		}
 
-		jsonMarshalStmts = append(
-			jsonMarshalStmts,
+		stmts = append(
+			stmts,
 			generator.NewIf(
 				fmt.Sprintf("a.%s != nil", o.alternativeName(i)),
 				returnStatement,
 			),
 		)
 	}
-	jsonMarshalStmts = append(jsonMarshalStmts, generator.NewReturnStatement(`"null"`))
+	stmts = append(stmts, generator.NewReturnStatement(`"null"`))
 
 	return generator.NewFunc(
 		generator.NewFuncReceiver("a", fmt.Sprintf("%s", o.Names.StructName)),
 		generator.NewFuncSignature("String").
 			AddReturnTypes("string"),
-		jsonMarshalStmts...,
+		stmts...,
 	)
 }
 
