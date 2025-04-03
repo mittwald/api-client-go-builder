@@ -209,12 +209,10 @@ func (c *ClientOperationRequest) buildQueryFunction(ctx *GeneratorContext) gener
 				stmts = append(stmts, stmt)
 			}
 		} else if t, ok := param.(TypeWithStringConversion); ok {
-			//var stmt generator.Statement = generator.NewRawStatementf("q.Set(%#v, %s)", name, t.EmitToString("r."+fieldName, ctx))
-			// q.Set("filter", r.Filter)
-			// q.Set("filter", fmt.Sprintf("%s", r.Filter))
+			key := fmt.Sprintf("%#v", name)
+			value := "fmt.Sprintf(\"%s\", " + t.EmitToString("r."+fieldName, ctx) + ")"
 
-			//value := t.EmitToString("r."+fieldName, ctx)
-			var stmt generator.Statement = generator.NewRawStatement("q.Set(" + fmt.Sprintf("%#v", name) + ", fmt.Sprintf(\"%s\", " + t.EmitToString("r."+fieldName, ctx) + "))")
+			var stmt generator.Statement = generator.NewRawStatementf("q.Set(%s, %s)", key, value)
 			if _, isOptional := param.(*OptionalType); isOptional {
 				stmt = generator.NewIf(fmt.Sprintf("r.%s != nil", fieldName), stmt)
 			}
