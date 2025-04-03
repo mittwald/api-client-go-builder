@@ -27,6 +27,21 @@ func BuildTypeFromSchema(names SchemaName, schema *base.SchemaProxy, knownTypes 
 		return &OneOfType{BaseType: baseType, AlternativeTypes: alternativeTypes}, nil
 	}
 
+	// This is a hack used in some of our API routes to declare fields as explicitly nullable
+	// (as opposed to "optional"), for example for PATCH routes in which "null" has a different
+	// semantic than "not set".
+	if len(schema.Schema().AllOf) == 1 && schema.Schema().Nullable != nil && *schema.Schema().Nullable {
+		innerType, err := BuildTypeFromSchema(names, schema.Schema().AllOf[0], knownTypes)
+		if err != nil {
+			return nil, fmt.Errorf("error building inner type for %s: %w", names.StructName, err)
+		}
+
+		return &ExplicitlyNullableType{
+			BaseType:  baseType,
+			InnerType: innerType,
+		}, nil
+	}
+
 	schemaType, err := GuessTypeFromSchema(schema)
 	if err != nil {
 		return nil, err
