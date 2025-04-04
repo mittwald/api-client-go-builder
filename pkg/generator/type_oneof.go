@@ -32,21 +32,25 @@ func (o *OneOfType) IsLightweight() bool {
 	return false
 }
 
+func (o *OneOfType) IsConvertableToString(ctx *GeneratorContext) bool {
+	convertableToString := true
+
+	for i, alt := range o.AlternativeTypes {
+		if ts, ok := alt.(TypeWithStringConversion); !ok || ts.EmitToString(o.alternativeName(i), ctx) == invalidNoStringConversion {
+			convertableToString = false
+		}
+	}
+
+	return convertableToString
+}
+
 func (o *OneOfType) EmitDeclaration(ctx *GeneratorContext) []generator.Statement {
 	stmts := make([]generator.Statement, 0)
 
 	structType := generator.NewStruct(o.Names.StructName)
-	convertableToString := true
 	for i, alt := range o.AlternativeTypes {
 		name := o.alternativeName(i)
 		structType = structType.AddField(name, "*"+alt.EmitReference(ctx))
-		if ts, ok := alt.(TypeWithStringConversion); !ok {
-			convertableToString = false
-		} else {
-			if ts.EmitToString(name, ctx) == invalidNoStringConversion {
-				convertableToString = false
-			}
-		}
 	}
 
 	stmts = append(stmts,
@@ -58,7 +62,7 @@ func (o *OneOfType) EmitDeclaration(ctx *GeneratorContext) []generator.Statement
 		o.emitValidateFunc(ctx),
 	)
 
-	if convertableToString {
+	if o.IsConvertableToString(ctx) {
 		stmts = append(stmts,
 			generator.NewNewline(),
 			o.emitToStringFunc(ctx),
@@ -229,5 +233,9 @@ func (o *OneOfType) BuildExample(ctx *GeneratorContext, level, maxLevel int) any
 }
 
 func (o *OneOfType) EmitToString(ref string, ctx *GeneratorContext) string {
-	return fmt.Sprintf("%s.String()", ref)
+	if o.IsConvertableToString(ctx) {
+		return fmt.Sprintf("%s.String()", ref)
+	}
+
+	return invalidNoStringConversion
 }
