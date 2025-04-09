@@ -190,8 +190,7 @@ func (o *OneOfType) emitToStringFunc(ctx *GeneratorContext) generator.Statement 
 	for i, alt := range o.AlternativeTypes {
 		returnStatement := generator.NewReturnStatement(`"null"`)
 
-		ts, ok := alt.(TypeWithStringConversion)
-		if ok {
+		if ts, ok := alt.(TypeWithStringConversion); ok {
 			res := fmt.Sprintf("*a.%s", ts.EmitToString(o.alternativeName(i), ctx))
 			returnStatement = generator.NewReturnStatement(res)
 		}
