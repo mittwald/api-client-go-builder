@@ -32,6 +32,16 @@ func (o *OneOfType) IsLightweight() bool {
 	return false
 }
 
+func (o *OneOfType) IsConvertableToString(ctx *GeneratorContext) bool {
+	for i, alt := range o.AlternativeTypes {
+		if ts, ok := alt.(TypeWithStringConversion); !ok || ts.EmitToString(o.alternativeName(i), ctx) == invalidNoStringConversion {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (o *OneOfType) EmitDeclaration(ctx *GeneratorContext) []generator.Statement {
 	stmts := make([]generator.Statement, 0)
 
@@ -49,6 +59,14 @@ func (o *OneOfType) EmitDeclaration(ctx *GeneratorContext) []generator.Statement
 		generator.NewNewline(),
 		o.emitValidateFunc(ctx),
 	)
+
+	if o.IsConvertableToString(ctx) {
+		stmts = append(stmts,
+			generator.NewNewline(),
+			o.emitToStringFunc(ctx),
+		)
+	}
+
 	return stmts
 }
 
@@ -167,6 +185,34 @@ func (o *OneOfType) emitJSONMarshalFunc() generator.Statement {
 	)
 }
 
+func (o *OneOfType) emitToStringFunc(ctx *GeneratorContext) generator.Statement {
+	stmts := make([]generator.Statement, 0)
+	for i, alt := range o.AlternativeTypes {
+		returnStatement := generator.NewReturnStatement(`"null"`)
+
+		if ts, ok := alt.(TypeWithStringConversion); ok {
+			res := fmt.Sprintf("*a.%s", ts.EmitToString(o.alternativeName(i), ctx))
+			returnStatement = generator.NewReturnStatement(res)
+		}
+
+		stmts = append(
+			stmts,
+			generator.NewIf(
+				fmt.Sprintf("a.%s != nil", o.alternativeName(i)),
+				returnStatement,
+			),
+		)
+	}
+	stmts = append(stmts, generator.NewReturnStatement(`"null"`))
+
+	return generator.NewFunc(
+		generator.NewFuncReceiver("a", o.Names.StructName),
+		generator.NewFuncSignature("String").
+			AddReturnTypes("string"),
+		stmts...,
+	)
+}
+
 func (o *OneOfType) EmitReference(ctx *GeneratorContext) string {
 	if ctx.CurrentPackage == o.Names.PackageKey {
 		return o.Names.StructName
@@ -181,4 +227,12 @@ func (o *OneOfType) EmitValidation(ref string, ctx *GeneratorContext) string {
 
 func (o *OneOfType) BuildExample(ctx *GeneratorContext, level, maxLevel int) any {
 	return o.AlternativeTypes[0].BuildExample(ctx, level, maxLevel)
+}
+
+func (o *OneOfType) EmitToString(ref string, ctx *GeneratorContext) string {
+	if o.IsConvertableToString(ctx) {
+		return fmt.Sprintf("%s.String()", ref)
+	}
+
+	return invalidNoStringConversion
 }
