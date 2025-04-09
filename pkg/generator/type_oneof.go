@@ -33,15 +33,13 @@ func (o *OneOfType) IsLightweight() bool {
 }
 
 func (o *OneOfType) IsConvertableToString(ctx *GeneratorContext) bool {
-	convertableToString := true
-
 	for i, alt := range o.AlternativeTypes {
 		if ts, ok := alt.(TypeWithStringConversion); !ok || ts.EmitToString(o.alternativeName(i), ctx) == invalidNoStringConversion {
-			convertableToString = false
+			return false
 		}
 	}
 
-	return convertableToString
+	return true
 }
 
 func (o *OneOfType) EmitDeclaration(ctx *GeneratorContext) []generator.Statement {
