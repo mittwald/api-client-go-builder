@@ -191,7 +191,7 @@ func (o *OneOfType) emitToStringFunc(ctx *GeneratorContext) generator.Statement 
 		returnStatement := generator.NewReturnStatement(`"null"`)
 
 		if ts, ok := alt.(TypeWithStringConversion); ok {
-			res := fmt.Sprintf("*a.%s", ts.EmitToString(o.alternativeName(i), ctx))
+			res := ts.EmitToString(fmt.Sprintf("*a.%s", o.alternativeName(i)), ctx)
 			returnStatement = generator.NewReturnStatement(res)
 		}
 
