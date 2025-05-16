@@ -19,16 +19,18 @@ var commonInitialisms = [...]string{
 }
 
 func ConvertToTypename(input string) string {
-	caser := cases.Title(language.English, cases.NoLower)
-	upper := caser.String(input)
+	cleaned := input
+	cleaned = strings.Replace(cleaned, "-", " ", -1)
+	cleaned = strings.Replace(cleaned, ":", " ", -1)
+	cleaned = strings.Replace(cleaned, ";", " ", -1)
+	cleaned = strings.Replace(cleaned, "_", " ", -1)
+	cleaned = strings.Replace(cleaned, "/", " ", -1)
+	cleaned = strings.Replace(cleaned, ".", " ", -1)
 
-	cleaned := upper
-	cleaned = strings.Replace(cleaned, "-", "", -1)
-	cleaned = strings.Replace(cleaned, ";", "", -1)
-	cleaned = strings.Replace(cleaned, "_", "", -1)
-	cleaned = strings.Replace(cleaned, " ", "", -1)
-	cleaned = strings.Replace(cleaned, "/", "", -1)
-	cleaned = strings.Replace(cleaned, ".", "", -1)
+	caser := cases.Title(language.English, cases.NoLower)
+	upper := caser.String(cleaned)
+
+	cleaned = strings.Replace(upper, " ", "", -1)
 
 	for _, i := range commonInitialisms {
 		cleaned = strings.Replace(cleaned, i, strings.ToUpper(i), -1)
