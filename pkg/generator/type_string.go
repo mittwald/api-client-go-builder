@@ -52,3 +52,7 @@ func (o *StringType) BuildExample(*GeneratorContext, int, int) any {
 func (o *StringType) EmitToString(ref string, _ *GeneratorContext) string {
 	return ref
 }
+
+func (o *StringType) IsPointerType() bool {
+	return false
+}

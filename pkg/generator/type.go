@@ -9,6 +9,7 @@ type Type interface {
 	Name() SchemaName
 	EmitDeclaration(ctx *GeneratorContext) []generator.Statement
 	EmitReference(ctx *GeneratorContext) string
+	IsPointerType() bool
 }
 
 type SchemaType interface {

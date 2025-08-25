@@ -86,3 +86,7 @@ func (o *StringEnumType) BuildExample(*GeneratorContext, int, int) any {
 func (o *StringEnumType) EmitToString(ref string, _ *GeneratorContext) string {
 	return fmt.Sprintf("string(%s)", ref)
 }
+
+func (o *StringEnumType) IsPointerType() bool {
+	return false
+}

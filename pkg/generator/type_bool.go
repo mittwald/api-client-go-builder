@@ -39,3 +39,7 @@ func (o *BoolType) BuildExample(*GeneratorContext, int, int) any {
 func (o *BoolType) EmitToString(ref string, _ *GeneratorContext) string {
 	return fmt.Sprintf("strconv.FormatBool(%s)", ref)
 }
+
+func (o *BoolType) IsPointerType() bool {
+	return false
+}

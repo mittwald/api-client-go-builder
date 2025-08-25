@@ -110,3 +110,7 @@ func (c *ClientSet) EmitReference(ctx *GeneratorContext) string {
 
 	return fmt.Sprintf("%s.%s", c.name.PackageKey, c.name.StructName)
 }
+
+func (c *ClientSet) IsPointerType() bool {
+	return false
+}

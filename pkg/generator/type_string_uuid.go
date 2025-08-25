@@ -45,3 +45,7 @@ func (o *StringUUIDType) BuildExample(*GeneratorContext, int, int) any {
 func (o *StringUUIDType) EmitToString(ref string, _ *GeneratorContext) string {
 	return ref
 }
+
+func (o *StringUUIDType) IsPointerType() bool {
+	return false
+}

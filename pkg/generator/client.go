@@ -290,3 +290,7 @@ func (c *Client) EmitImplReference(ctx *GeneratorContext) string {
 
 	return fmt.Sprintf("%s.%s", c.name.PackageKey, c.ImplName())
 }
+
+func (c *Client) IsPointerType() bool {
+	return false
+}

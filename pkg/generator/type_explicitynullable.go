@@ -144,3 +144,7 @@ func (o *ExplicitlyNullableType) EmitToString(ref string, ctx *GeneratorContext)
 func (o *ExplicitlyNullableType) Unpack() SchemaType {
 	return o.InnerType
 }
+
+func (o *ExplicitlyNullableType) IsPointerType() bool {
+	return false // ironic, isn't it?
+}
