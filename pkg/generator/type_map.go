@@ -54,3 +54,7 @@ func (o *MapType) BuildExample(ctx *GeneratorContext, level, maxLevel int) any {
 		"string": o.ItemType.BuildExample(ctx, level+1, maxLevel),
 	}
 }
+
+func (o *MapType) IsPointerType() bool {
+	return true
+}

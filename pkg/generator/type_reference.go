@@ -78,3 +78,7 @@ func (o *ReferenceType) EmitToString(ref string, ctx *GeneratorContext) string {
 	// if they want compile errors, give them compile errors!
 	return "invalid-no-string-conversion"
 }
+
+func (o *ReferenceType) IsPointerType() bool {
+	return o.TargetType.IsPointerType()
+}

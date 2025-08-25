@@ -83,3 +83,7 @@ func (o *OptionalType) EmitToString(ref string, ctx *GeneratorContext) string {
 func (o *OptionalType) Unpack() SchemaType {
 	return o.InnerType
 }
+
+func (o *OptionalType) IsPointerType() bool {
+	return true
+}

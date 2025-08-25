@@ -136,3 +136,7 @@ func (o *ObjectType) BuildExample(ctx *GeneratorContext, level, maxLevel int) an
 
 	return example
 }
+
+func (o *ObjectType) IsPointerType() bool {
+	return false
+}

@@ -25,7 +25,6 @@ func (o *OneOfType) BuildSubtypes(_ GeneratorOpts, store *TypeStore) error {
 func (o *OneOfType) alternativeName(idx int) string {
 	alternativeName := o.AlternativeTypes[idx].Name().StructName
 	return fmt.Sprintf("Alternative%s", alternativeName)
-	//return fmt.Sprintf("Alternative%d", idx+1)
 }
 
 func (o *OneOfType) IsLightweight() bool {
@@ -47,8 +46,13 @@ func (o *OneOfType) EmitDeclaration(ctx *GeneratorContext) []generator.Statement
 
 	structType := generator.NewStruct(o.Names.StructName)
 	for i, alt := range o.AlternativeTypes {
+		alternativeTypeReference := alt.EmitReference(ctx)
+		if !alt.IsPointerType() {
+			alternativeTypeReference = "*" + alternativeTypeReference
+		}
+
 		name := o.alternativeName(i)
-		structType = structType.AddField(name, "*"+alt.EmitReference(ctx))
+		structType = structType.AddField(name, alternativeTypeReference)
 	}
 
 	stmts = append(stmts,
@@ -113,6 +117,11 @@ func (o *OneOfType) emitJSONUnmarshalFunc(ctx *GeneratorContext) generator.State
 		name := o.alternativeName(i)
 		localName := util.LowerFirst(name)
 
+		localReference := localName
+		if !alt.IsPointerType() {
+			localReference = "&" + localName
+		}
+
 		unmarshalCondition := generator.NewIf(
 			fmt.Sprintf("err := dec.Decode(&%s); err == nil", localName),
 		)
@@ -123,20 +132,20 @@ func (o *OneOfType) emitJSONUnmarshalFunc(ctx *GeneratorContext) generator.State
 				unmarshalCondition = unmarshalCondition.AddStatements(
 					generator.NewCommentf("subtype: %T", alt),
 					generator.NewIf(fmt.Sprintf("vErr := %s; vErr == nil", validation),
-						generator.NewRawStatementf("a.%s = &%s", name, localName),
+						generator.NewRawStatementf("a.%s = %s", name, localReference),
 						generator.NewRawStatement("decodedAtLeastOnce = true"),
 					),
 				)
 			} else {
 				unmarshalCondition = unmarshalCondition.AddStatements(
 					generator.NewCommentf("subtype: %T", alt),
-					generator.NewRawStatementf("a.%s = &%s", name, localName),
+					generator.NewRawStatementf("a.%s = %s", name, localReference),
 					generator.NewRawStatement("decodedAtLeastOnce = true"),
 				)
 			}
 		} else {
 			unmarshalCondition = unmarshalCondition.AddStatements(
-				generator.NewRawStatementf("a.%s = &%s", name, localName),
+				generator.NewRawStatementf("a.%s = %s", name, localReference),
 				generator.NewRawStatement("decodedAtLeastOnce = true"),
 			)
 		}
@@ -235,4 +244,8 @@ func (o *OneOfType) EmitToString(ref string, ctx *GeneratorContext) string {
 	}
 
 	return invalidNoStringConversion
+}
+
+func (o *OneOfType) IsPointerType() bool {
+	return false
 }

@@ -40,3 +40,7 @@ func (o *FloatType) BuildExample(*GeneratorContext, int, int) any {
 func (o *FloatType) EmitToString(ref string, _ *GeneratorContext) string {
 	return fmt.Sprintf("fmt.Sprintf(\"%%f\", %s)", ref)
 }
+
+func (o *FloatType) IsPointerType() bool {
+	return false
+}

@@ -50,3 +50,7 @@ func (o *DateType) EmitToString(ref string, _ *GeneratorContext) string {
 	ref = strings.TrimPrefix(ref, "*")
 	return fmt.Sprintf("%s.Format(time.RFC3339)", ref)
 }
+
+func (o *DateType) IsPointerType() bool {
+	return false
+}

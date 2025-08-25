@@ -86,3 +86,7 @@ func (o *ArrayType) BuildExample(ctx *GeneratorContext, level, maxLevel int) any
 	}
 	return []any{o.ItemType.BuildExample(ctx, level+1, maxLevel)}
 }
+
+func (o *ArrayType) IsPointerType() bool {
+	return true
+}

@@ -35,3 +35,7 @@ func (o *UnknownType) EmitReference(*GeneratorContext) string {
 func (o *UnknownType) BuildExample(*GeneratorContext, int, int) any {
 	return nil
 }
+
+func (o *UnknownType) IsPointerType() bool {
+	return true
+}
