@@ -1,0 +1,40 @@
+name: test-generation.yml
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          repository: mittwald/api-client-go
+          path: api-client-go
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.23'
+
+      - name: Run client generation
+        run: |
+          set -e
+          rm -rf ./api-client-go/mittwaldv2/generated
+          go run cmd/mittwald-go-client-builder/main.go generate --target ./api-client-go/mittwaldv2/generated --pkg mittwaldv2 --url https://api.mittwald.de/v2/openapi.json
+
+      - name: Run goimports on generated code
+        working-directory: api-client-go
+        run: |
+          set -e
+          go install golang.org/x/tools/cmd/goimports@latest
+          goimports -w ./api-client-go/mittwaldv2/generated
+
+      - name: Run unit tests on generated code
+        working-directory: api-client-go
+        run: go test -v .
