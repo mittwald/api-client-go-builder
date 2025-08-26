@@ -1,4 +1,4 @@
-name: test-generation.yml
+name: Generate and verify client
 
 on:
   push:
@@ -33,7 +33,7 @@ jobs:
         run: |
           set -e
           go install golang.org/x/tools/cmd/goimports@latest
-          goimports -w ./api-client-go/mittwaldv2/generated
+          goimports -w .
 
       - name: Run unit tests on generated code
         working-directory: api-client-go
