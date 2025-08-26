@@ -37,5 +37,8 @@ func (o *UnknownType) BuildExample(*GeneratorContext, int, int) any {
 }
 
 func (o *UnknownType) IsPointerType() bool {
-	return true
+	// Even though `any` can be a pointer type, we treat it as non-pointer type here;
+	// since `nil` is a valid value, we still need to use a pointer to `any` when
+	// the field is optional.
+	return false
 }
