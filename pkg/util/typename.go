@@ -1,9 +1,10 @@
 package util
 
 import (
+	"strings"
+
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
-	"strings"
 )
 
 var commonInitialisms = [...]string{
@@ -16,6 +17,7 @@ var commonInitialisms = [...]string{
 	"Id",
 	"Mfa",
 	"Api",
+	"Ai",
 }
 
 func ConvertToTypename(input string) string {
