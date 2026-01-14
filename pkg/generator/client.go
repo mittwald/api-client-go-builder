@@ -2,16 +2,17 @@ package generator
 
 import (
 	"fmt"
+	"net/http"
+	"path"
+	"strconv"
+	"strings"
+
 	"github.com/charmbracelet/log"
 	"github.com/mittwald/api-client-go-builder/pkg/generatorx"
 	"github.com/mittwald/api-client-go-builder/pkg/util"
 	"github.com/moznion/gowrtr/generator"
 	v3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 	orderedmap "github.com/wk8/go-ordered-map/v2"
-	"net/http"
-	"path"
-	"strconv"
-	"strings"
 )
 
 var commonPrefixes = [...]string{
@@ -25,6 +26,7 @@ var commonPrefixes = [...]string{
 	"notifications",
 	"ssh-user",
 	"sftp-user",
+	"ai-hosting",
 }
 
 type OperationWithMeta struct {
