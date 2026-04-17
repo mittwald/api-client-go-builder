@@ -2,6 +2,7 @@ package generator
 
 import (
 	"fmt"
+
 	"github.com/mittwald/api-client-go-builder/pkg/util"
 	"github.com/moznion/gowrtr/generator"
 	"github.com/pb33f/libopenapi/orderedmap"
@@ -23,6 +24,10 @@ func (o *ObjectType) IsLightweight() bool {
 }
 
 func (o *ObjectType) BuildSubtypes(_ GeneratorOpts, store *TypeStore) error {
+	if o.subtypesBuilt {
+		return nil
+	}
+
 	s := o.schema.Schema()
 
 	o.subtypesBuilt = true
