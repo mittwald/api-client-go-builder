@@ -3,6 +3,7 @@ package generator
 import (
 	"fmt"
 
+	"github.com/mittwald/api-client-go-builder/pkg/generatorx"
 	"github.com/mittwald/api-client-go-builder/pkg/util"
 	"github.com/moznion/gowrtr/generator"
 	"github.com/pb33f/libopenapi/orderedmap"
@@ -79,7 +80,7 @@ func (o *ObjectType) EmitDeclaration(ctx *GeneratorContext) []generator.Statemen
 	}
 
 	return []generator.Statement{
-		generator.NewComment(s.Description),
+		generatorx.NewMultilineComment(s.Description),
 		structDecl,
 		o.emitValidationFunction(ctx),
 	}
