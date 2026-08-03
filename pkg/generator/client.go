@@ -257,7 +257,7 @@ func (c *Client) EmitDeclaration(ctx *GeneratorContext) []generator.Statement {
 		clientInterface = clientInterface.AddSignatures(funcSignature)
 
 		if summ := op.Operation.Summary; summ != "" {
-			funcStmts = append(funcStmts, generator.NewComment(summ))
+			funcStmts = append(funcStmts, generatorx.NewMultilineComment(summ))
 		}
 
 		if desc := op.Operation.Description; desc != "" {
