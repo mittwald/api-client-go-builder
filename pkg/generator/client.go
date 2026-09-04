@@ -35,9 +35,10 @@ type OperationWithMeta struct {
 	Operation *v3.Operation
 	Name      string
 
-	requestType    Type
-	responseType   Type
-	responseFormat string
+	requestType     Type
+	responseType    Type
+	responseFormat  string
+	bodylessSuccess bool
 }
 
 type statusResponseSchemaTuple struct {
@@ -100,8 +101,10 @@ func (c *Client) BuildSubtypes(_ GeneratorOpts, store *TypeStore) error {
 				return fmt.Errorf("response code %s of operation %s could not be parsed as int: %w", code, op.Operation.OperationId, err)
 			}
 
-			if codeAsInt >= 200 && codeAsInt < 400 && response.Content != nil {
-				if schema, ok := response.Content.Get("application/json"); ok {
+			if codeAsInt >= 200 && codeAsInt < 400 {
+				if response.Content == nil {
+					c.operations[i].bodylessSuccess = true
+				} else if schema, ok := response.Content.Get("application/json"); ok {
 					responses.Set(codeAsInt, statusResponseSchemaTuple{
 						status:   codeAsInt,
 						response: response,
@@ -231,9 +234,20 @@ func (c *Client) EmitDeclaration(ctx *GeneratorContext) []generator.Statement {
 		if op.responseType != nil {
 			funcSignature = funcSignature.AddReturnTypes("*"+op.responseType.EmitReference(ctx), "*http.Response", "error")
 			if op.responseFormat == "json" {
+				decodeFailureStmts := []generator.Statement{errorReturnWithResponse}
+				if op.bodylessSuccess {
+					decodeFailureStmts = []generator.Statement{
+						generator.NewComment(" A success status that the spec declares without a response body."),
+						generator.NewIf("errors.Is(err, io.EOF)",
+							generator.NewReturnStatement("nil", "httpRes", "nil"),
+						),
+						errorReturnWithResponse,
+					}
+				}
+
 				operationFuncStmts = append(operationFuncStmts,
 					generator.NewRawStatementf("var response %s", op.responseType.EmitReference(ctx)),
-					generator.NewIf("err := json.NewDecoder(httpRes.Body).Decode(&response); err != nil", errorReturnWithResponse),
+					generator.NewIf("err := json.NewDecoder(httpRes.Body).Decode(&response); err != nil", decodeFailureStmts...),
 					generator.NewReturnStatement("&response", "httpRes", "nil"),
 				)
 			} else {

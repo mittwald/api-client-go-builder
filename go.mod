@@ -1,6 +1,6 @@
 module github.com/mittwald/api-client-go-builder
 
-go 1.23.3
+go 1.26.8
 
 require (
 	github.com/charmbracelet/log v0.4.0
@@ -16,7 +16,7 @@ require (
 require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
-	github.com/buger/jsonparser v1.1.1 // indirect
+	github.com/buger/jsonparser v1.6.1 // indirect
 	github.com/charmbracelet/lipgloss v0.10.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.5 // indirect
 	github.com/dprotaso/go-yit v0.0.0-20240618133044-5a0af90af097 // indirect
