@@ -130,10 +130,10 @@ func (s *TypeStore) EmitDeclarations(targetPath string, buildReferenceLink refer
 	packagesWithTestcases := make(map[string]string)
 
 	buildType := func(what string, typ Type) error {
-		ctxForType := ctx
-		ctxForType.CurrentPackage = typ.Name().PackageKey
+		names := declarationName(typ)
 
-		names := typ.Name()
+		ctxForType := ctx
+		ctxForType.CurrentPackage = names.PackageKey
 		stmts := typ.EmitDeclaration(&ctxForType)
 
 		log.Infof("emitting declaration for %s", names.StructName)
