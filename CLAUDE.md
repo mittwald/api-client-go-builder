@@ -34,7 +34,7 @@ go test ./pkg/util -run TestConvertToTypename     # single test
 go test ./pkg/util -run 'TestConvertToTypename/.*sftp'   # single subtest
 ```
 
-CI (`.github/workflows/test.yml`) runs exactly build + vet + test on Go 1.23.
+CI (`.github/workflows/test.yml`) runs exactly build + vet + test on Go 1.26.
 
 ### One-time tool setup
 
@@ -152,6 +152,11 @@ return `(*Response, *http.Response, error)`.
   them: `commonInitialisms` in `pkg/util/typename.go` (`Ssh` → `SSH`, `Api` → `API`, …) and `commonPrefixes` in
   `pkg/generator/client.go` (strips redundant prefixes off operation IDs, e.g. `ssh-user-create-ssh-user` →
   `CreateSSHUser`). Pin new initialism behaviour with a case in `pkg/util/typename_test.go`.
+- **Success statuses without a body.** When an operation declares `application/json` on some 2xx/3xx statuses
+  and no body at all on others (`user-delete-user`: 200 empty + 202 MFA; `user-authenticate`: 204 for
+  `cookieOnly=true`), the emitted method tolerates `io.EOF` from the decoder and returns `(nil, httpRes, nil)`
+  instead of the EOF error — **callers must nil-check the response**. Keyed on the decode failing, not on the
+  status: `pkg/httpclient_mock` hardcodes `StatusCode: 204` for every mock, so a status guard would drop bodies.
 - **Explicit nullability.** A schema with exactly one `allOf` entry plus `nullable: true` is a mittwald-specific
   convention meaning "may be explicitly `null`" (as opposed to merely absent, for PATCH semantics) and maps to
   `ExplicitlyNullableType`, not to `OptionalType`.
