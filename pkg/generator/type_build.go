@@ -10,7 +10,7 @@ func BuildTypeFromSchema(names SchemaName, schema *base.SchemaProxy, knownTypes 
 	format := schema.Schema().Format
 
 	if schema.IsReference() {
-		return &ReferenceType{BaseType: baseType, Target: schema.GetReference()}, nil
+		return &ReferenceType{BaseType: baseType, DeclaredNames: names, Target: schema.GetReference()}, nil
 	}
 
 	if len(schema.Schema().OneOf) > 0 {

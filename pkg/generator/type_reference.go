@@ -11,6 +11,17 @@ type ReferenceType struct {
 	BaseType
 	Target     string
 	TargetType SchemaType
+
+	// DeclaredNames is the name this reference was built under. BuildSubtypes
+	// replaces Names with the target's name (so that references to this type --
+	// and oneOf alternative names derived from it -- resolve to the target), but
+	// a reference that is a component schema of its own still has to be declared
+	// under the name it was declared with in the spec.
+	DeclaredNames SchemaName
+}
+
+func (o *ReferenceType) DeclarationName() SchemaName {
+	return o.DeclaredNames
 }
 
 func (o *ReferenceType) IsLightweight() bool {
@@ -39,7 +50,7 @@ func (o *ReferenceType) lookupReferenceOnce(ctx *GeneratorContext) SchemaType {
 
 func (o *ReferenceType) EmitDeclaration(ctx *GeneratorContext) []generator.Statement {
 	return []generator.Statement{
-		generator.NewRawStatementf("type %s = %s", o.Names.StructName, o.EmitReference(ctx)),
+		generator.NewRawStatementf("type %s = %s", o.DeclaredNames.StructName, o.EmitReference(ctx)),
 	}
 }
 
