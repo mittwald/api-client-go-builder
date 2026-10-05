@@ -71,7 +71,7 @@ func (o *ObjectType) EmitDeclaration(ctx *GeneratorContext) []generator.Statemen
 			jsonTag += ",omitempty"
 		}
 
-		fieldName := util.UpperFirst(propName)
+		fieldName := util.ConvertToFieldname(propName)
 		structDecl = structDecl.AddField(
 			fieldName,
 			propType.EmitReference(ctx),
@@ -90,7 +90,7 @@ func (o *ObjectType) emitValidationFunction(ctx *GeneratorContext) generator.Sta
 	stmts := make([]generator.Statement, 0)
 
 	for propName, propType := range o.PropertyTypes.FromOldest() {
-		ref := fmt.Sprintf("o.%s", util.UpperFirst(propName))
+		ref := fmt.Sprintf("o.%s", util.ConvertToFieldname(propName))
 
 		if _, req := o.RequiredProperties[propName]; req {
 			switch propType.(type) {
